@@ -13,8 +13,8 @@ import Color
 import Cone3d
 import Cylinder3d
 import Direction3d
-import Html exposing (Html, div, text)
-import Html.Events.Extra.Touch as Touch
+import Html exposing (Html, div, text, button)
+import Html.Events exposing (onClick)
 import Json.Decode as Decode exposing (Decoder)
 import Length
 import LineSegment3d
@@ -52,15 +52,7 @@ type Msg
     = MouseDown
     | MouseUp
     | MouseMove (Quantity Float Pixels) (Quantity Float Pixels)
-    | StartAt ( Float, Float )
-    | MoveAt ( Float, Float )
-    | EndAt ( Float, Float )
-
-touchCoordinates : Touch.Event -> ( Float, Float )
-touchCoordinates touchEvent =
-    List.head touchEvent.changedTouches
-        |> Maybe.map .clientPos
-        |> Maybe.withDefault ( 0, 0 )
+    | Reset
 
 toCartesian r phi =
   let
@@ -199,6 +191,11 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update message model =
     case message of
         -- Start orbiting when a mouse button is pressed
+        Reset ->
+            ( { model |   azimuth = Angle.degrees 0
+                        , elevation = Angle.degrees 0
+              }
+              , Cmd.none )
         MouseDown ->
             ( { model | orbiting = True }, Cmd.none )
 
@@ -235,10 +232,6 @@ update message model =
                 )
             else
                 ( model, Cmd.none )
-
-        StartAt _ -> ( model, Cmd.none )
-        MoveAt  _ -> ( model, Cmd.none )
-        EndAt   _ -> ( model, Cmd.none )
 
 {-| Use movementX and movementY for simplicity (don't need to store initial
 mouse position in the model) - not supported in Internet Explorer though
@@ -280,13 +273,7 @@ view model =
     { title = "Test Mesh"
     , body =
         [
-        div
-            [ Touch.onStart (StartAt << touchCoordinates)
-            , Touch.onMove (MoveAt << touchCoordinates)
-            , Touch.onEnd (EndAt << touchCoordinates)
-            ]
-        [text "touch here"]
-    , Scene3d.unlit
+      Scene3d.unlit
             { camera = camera
             , clipDepth = Length.meters 0.1
             , dimensions = ( Pixels.int 800, Pixels.int 600 )
@@ -299,10 +286,12 @@ view model =
                           , coords
                           ]
             }
+        , div []
+            [ button [ onClick Reset ] [ text "xz-Projection" ]
+            ]
         ]
     }
 
--- leave subscriptions empty for now
 subscriptions : Model -> Sub Msg
 subscriptions model =
     if model.orbiting then
