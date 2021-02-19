@@ -7064,6 +7064,7 @@ var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Arrow$init = function (_v0) {
 	return _Utils_Tuple2(
 		{
+			angularMomentum: 1.5,
 			azimuth: $ianmackenzie$elm_units$Angle$degrees(45),
 			elevation: $ianmackenzie$elm_units$Angle$degrees(30),
 			orbiting: false
@@ -7550,9 +7551,28 @@ var $ianmackenzie$elm_units$Quantity$plus = F2(
 		var x = _v1.a;
 		return $ianmackenzie$elm_units$Quantity$Quantity(x + y);
 	});
+var $elm$core$String$toFloat = _String_toFloat;
+var $author$project$Arrow$stupidConvert = function (text) {
+	var _v0 = $elm$core$String$toFloat(text);
+	if (_v0.$ === 'Just') {
+		var val = _v0.a;
+		return val;
+	} else {
+		return 1.0;
+	}
+};
 var $author$project$Arrow$update = F2(
 	function (message, model) {
 		switch (message.$) {
+			case 'Change':
+				var amText = message.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							angularMomentum: $author$project$Arrow$stupidConvert(amText)
+						}),
+					$elm$core$Platform$Cmd$none);
 			case 'Reset':
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -7604,6 +7624,9 @@ var $author$project$Arrow$update = F2(
 				}
 		}
 	});
+var $author$project$Arrow$Change = function (a) {
+	return {$: 'Change', a: a};
+};
 var $author$project$Arrow$Reset = {$: 'Reset'};
 var $elm$core$Basics$asin = _Basics_asin;
 var $elm$core$Basics$cos = _Basics_cos;
@@ -10856,6 +10879,8 @@ var $author$project$Arrow$coords = function () {
 			[xcoord, ycoord, zcoord]));
 }();
 var $elm$html$Html$div = _VirtualDom_node('div');
+var $elm$core$String$fromFloat = _String_fromNumber;
+var $elm$html$Html$input = _VirtualDom_node('input');
 var $ianmackenzie$elm_units$Pixels$int = function (numPixels) {
 	return $ianmackenzie$elm_units$Quantity$Quantity(numPixels);
 };
@@ -10875,6 +10900,38 @@ var $elm$html$Html$Events$onClick = function (msg) {
 		$elm$html$Html$Events$on,
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
+};
+var $elm$html$Html$Events$alwaysStop = function (x) {
+	return _Utils_Tuple2(x, true);
+};
+var $elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
+	return {$: 'MayStopPropagation', a: a};
+};
+var $elm$html$Html$Events$stopPropagationOn = F2(
+	function (event, decoder) {
+		return A2(
+			$elm$virtual_dom$VirtualDom$on,
+			event,
+			$elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
+	});
+var $elm$json$Json$Decode$at = F2(
+	function (fields, decoder) {
+		return A3($elm$core$List$foldr, $elm$json$Json$Decode$field, decoder, fields);
+	});
+var $elm$json$Json$Decode$string = _Json_decodeString;
+var $elm$html$Html$Events$targetValue = A2(
+	$elm$json$Json$Decode$at,
+	_List_fromArray(
+		['target', 'value']),
+	$elm$json$Json$Decode$string);
+var $elm$html$Html$Events$onInput = function (tagger) {
+	return A2(
+		$elm$html$Html$Events$stopPropagationOn,
+		'input',
+		A2(
+			$elm$json$Json$Decode$map,
+			$elm$html$Html$Events$alwaysStop,
+			A2($elm$json$Json$Decode$map, tagger, $elm$html$Html$Events$targetValue)));
 };
 var $ianmackenzie$elm_3d_camera$Camera3d$Types$Viewpoint3d = function (a) {
 	return {$: 'Viewpoint3d', a: a};
@@ -11118,6 +11175,15 @@ var $ianmackenzie$elm_3d_camera$Camera3d$perspective = function (_arguments) {
 			viewpoint: _arguments.viewpoint
 		});
 };
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $elm$html$Html$Attributes$stringProperty = F2(
+	function (key, string) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$string(string));
+	});
+var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
 var $author$project$Arrow$toCartesian = F2(
 	function (r, phi) {
 		var y = r * $elm$core$Basics$sin(phi);
@@ -11257,7 +11323,6 @@ var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $elm$core$String$concat = function (strings) {
 	return A2($elm$core$String$join, '', strings);
 };
-var $elm$core$String$fromFloat = _String_fromNumber;
 var $avh4$elm_color$Color$toCssString = function (_v0) {
 	var r = _v0.a;
 	var g = _v0.b;
@@ -12329,6 +12394,7 @@ var $ianmackenzie$elm_3d_scene$Scene3d$unlit = function (_arguments) {
 			whiteBalance: $ianmackenzie$elm_3d_scene$Scene3d$Light$daylight
 		});
 };
+var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
 var $author$project$Arrow$view = function (model) {
 	var viewpoint = $ianmackenzie$elm_3d_camera$Viewpoint3d$orbitZ(
 		{
@@ -12356,10 +12422,10 @@ var $author$project$Arrow$view = function (model) {
 					entities: $elm$core$List$concat(
 						_List_fromArray(
 							[
-								$author$project$Arrow$arrows(1.5),
-								A2($author$project$Arrow$ring, 1.5, 100),
-								A2($author$project$Arrow$ring2, 1.5, 100),
-								A2($author$project$Arrow$ring3, 1.5, 100),
+								$author$project$Arrow$arrows(model.angularMomentum),
+								A2($author$project$Arrow$ring, model.angularMomentum, 40),
+								A2($author$project$Arrow$ring2, model.angularMomentum, 40),
+								A2($author$project$Arrow$ring3, model.angularMomentum, 40),
 								$author$project$Arrow$coords
 							]))
 				}),
@@ -12378,6 +12444,22 @@ var $author$project$Arrow$view = function (model) {
 							[
 								$elm$html$Html$text('xz-Projection')
 							]))
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$input,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$placeholder('1.0'),
+								$elm$html$Html$Attributes$value(
+								$elm$core$String$fromFloat(model.angularMomentum)),
+								$elm$html$Html$Events$onInput($author$project$Arrow$Change)
+							]),
+						_List_Nil)
 					]))
 			]),
 		title: 'Test Mesh'

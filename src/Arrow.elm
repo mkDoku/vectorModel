@@ -13,8 +13,9 @@ import Color
 import Cone3d
 import Cylinder3d
 import Direction3d
-import Html exposing (Html, div, text, button)
-import Html.Events exposing (onClick)
+import Html exposing (Html, div, text, button, input)
+import Html.Attributes exposing (value, placeholder)
+import Html.Events exposing (onClick, onInput)
 import Json.Decode as Decode exposing (Decoder)
 import Length
 import LineSegment3d
@@ -46,6 +47,7 @@ type alias Model =
     azimuth   : Angle
   , elevation : Angle
   , orbiting  : Bool
+  , angularMomentum : Float
   }
 
 type Msg
@@ -53,6 +55,7 @@ type Msg
     | MouseUp
     | MouseMove (Quantity Float Pixels) (Quantity Float Pixels)
     | Reset
+    | Change String
 
 toCartesian r phi =
   let
@@ -183,14 +186,22 @@ init () =
         azimuth  = Angle.degrees 45
       , elevation = Angle.degrees 30
       , orbiting  = False
+      , angularMomentum = 1.5
       }
     , Cmd.none
     )
+
+stupidConvert text =
+  case String.toFloat text of
+    Just val -> val
+    Nothing -> 1.0
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update message model =
     case message of
         -- Start orbiting when a mouse button is pressed
+        Change amText ->
+           ( { model | angularMomentum = stupidConvert amText }, Cmd.none )
         Reset ->
             ( { model |   azimuth = Angle.degrees 0
                         , elevation = Angle.degrees 0
@@ -279,15 +290,20 @@ view model =
             , dimensions = ( Pixels.int 800, Pixels.int 600 )
             , background = Scene3d.transparentBackground
             , entities = List.concat
-                          [ arrows 1.5
-                          , ring   1.5 100
-                          , ring2  1.5 100
-                          , ring3  1.5 100
+                          [ arrows model.angularMomentum
+                          , ring   model.angularMomentum 40
+                          , ring2  model.angularMomentum 40
+                          , ring3  model.angularMomentum 40
                           , coords
                           ]
             }
         , div []
             [ button [ onClick Reset ] [ text "xz-Projection" ]
+            ]
+        , div []
+            [ input [ placeholder "1.0"
+                    , value (String.fromFloat model.angularMomentum)
+                    , onInput Change ] []
             ]
         ]
     }
