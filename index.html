@@ -7064,9 +7064,10 @@ var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Arrow$init = function (_v0) {
 	return _Utils_Tuple2(
 		{
-			angularMomentum: 1.5,
+			angularMomentum: 1,
 			azimuth: $ianmackenzie$elm_units$Angle$degrees(45),
 			elevation: $ianmackenzie$elm_units$Angle$degrees(30),
+			isTotalAngularMomentum: false,
 			orbiting: false
 		},
 		$elm$core$Platform$Cmd$none);
@@ -7535,6 +7536,7 @@ var $ianmackenzie$elm_units$Quantity$minus = F2(
 var $elm$core$Basics$negate = function (n) {
 	return -n;
 };
+var $elm$core$Basics$not = _Basics_not;
 var $ianmackenzie$elm_units$Quantity$per = F2(
 	function (_v0, _v1) {
 		var independentValue = _v0.a;
@@ -7551,19 +7553,31 @@ var $ianmackenzie$elm_units$Quantity$plus = F2(
 		var x = _v1.a;
 		return $ianmackenzie$elm_units$Quantity$Quantity(x + y);
 	});
-var $elm$core$String$toFloat = _String_toFloat;
 var $author$project$Arrow$stupidConvert = function (text) {
-	var _v0 = $elm$core$String$toFloat(text);
+	var _v0 = $elm$core$String$toInt(text);
 	if (_v0.$ === 'Just') {
 		var val = _v0.a;
 		return val;
 	} else {
-		return 1.0;
+		return 1;
 	}
 };
 var $author$project$Arrow$update = F2(
 	function (message, model) {
 		switch (message.$) {
+			case 'ChangeL':
+				var l = message.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{angularMomentum: l}),
+					$elm$core$Platform$Cmd$none);
+			case 'TotalAngular':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{isTotalAngularMomentum: !model.isTotalAngularMomentum}),
+					$elm$core$Platform$Cmd$none);
 			case 'Change':
 				var amText = message.a;
 				return _Utils_Tuple2(
@@ -7628,6 +7642,7 @@ var $author$project$Arrow$Change = function (a) {
 	return {$: 'Change', a: a};
 };
 var $author$project$Arrow$Reset = {$: 'Reset'};
+var $author$project$Arrow$TotalAngular = {$: 'TotalAngular'};
 var $elm$core$Basics$asin = _Basics_asin;
 var $elm$core$Basics$cos = _Basics_cos;
 var $ianmackenzie$elm_geometry$Geometry$Types$Point3d = function (a) {
@@ -8327,7 +8342,6 @@ var $elm$core$Basics$composeL = F3(
 		return g(
 			f(x));
 	});
-var $elm$core$Basics$not = _Basics_not;
 var $elm$core$List$all = F2(
 	function (isOkay, list) {
 		return !A2(
@@ -10879,10 +10893,8 @@ var $author$project$Arrow$coords = function () {
 			[xcoord, ycoord, zcoord]));
 }();
 var $elm$html$Html$div = _VirtualDom_node('div');
-var $elm$core$String$fromFloat = _String_fromNumber;
-var $elm$html$Html$input = _VirtualDom_node('input');
-var $ianmackenzie$elm_units$Pixels$int = function (numPixels) {
-	return $ianmackenzie$elm_units$Quantity$Quantity(numPixels);
+var $author$project$Arrow$ChangeL = function (a) {
+	return {$: 'ChangeL', a: a};
 };
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
@@ -10900,6 +10912,29 @@ var $elm$html$Html$Events$onClick = function (msg) {
 		$elm$html$Html$Events$on,
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
+};
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $author$project$Arrow$genLButton = function (l) {
+	return A2(
+		$elm$html$Html$button,
+		_List_fromArray(
+			[
+				$elm$html$Html$Events$onClick(
+				$author$project$Arrow$ChangeL(l))
+			]),
+		_List_fromArray(
+			[
+				$elm$html$Html$text(
+				$elm$core$String$fromInt(l))
+			]));
+};
+var $author$project$Arrow$genLButtons = function (ls) {
+	return A2($elm$core$List$map, $author$project$Arrow$genLButton, ls);
+};
+var $elm$html$Html$input = _VirtualDom_node('input');
+var $ianmackenzie$elm_units$Pixels$int = function (numPixels) {
+	return $ianmackenzie$elm_units$Quantity$Quantity(numPixels);
 };
 var $elm$html$Html$Events$alwaysStop = function (x) {
 	return _Utils_Tuple2(x, true);
@@ -11268,8 +11303,6 @@ var $author$project$Arrow$ring3 = F2(
 			$ianmackenzie$elm_3d_scene$Scene3d$lineSegment(color),
 			A2($elm$core$List$map, $ianmackenzie$elm_geometry$LineSegment3d$fromEndpoints, valuesT));
 	});
-var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $ianmackenzie$elm_3d_scene$Scene3d$BackgroundColor = function (a) {
 	return {$: 'BackgroundColor', a: a};
 };
@@ -11282,6 +11315,7 @@ var $avh4$elm_color$Color$rgba = F4(
 	});
 var $ianmackenzie$elm_3d_scene$Scene3d$transparentBackground = $ianmackenzie$elm_3d_scene$Scene3d$backgroundColor(
 	A4($avh4$elm_color$Color$rgba, 0, 0, 0, 0));
+var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
 var $elm_explorations$webgl$WebGL$Internal$Alpha = function (a) {
 	return {$: 'Alpha', a: a};
 };
@@ -11323,6 +11357,7 @@ var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $elm$core$String$concat = function (strings) {
 	return A2($elm$core$String$join, '', strings);
 };
+var $elm$core$String$fromFloat = _String_fromNumber;
 var $avh4$elm_color$Color$toCssString = function (_v0) {
 	var r = _v0.a;
 	var g = _v0.b;
@@ -12408,6 +12443,14 @@ var $author$project$Arrow$view = function (model) {
 			verticalFieldOfView: $ianmackenzie$elm_units$Angle$degrees(30),
 			viewpoint: viewpoint
 		});
+	var angularMomentum = function () {
+		var _v0 = model.isTotalAngularMomentum;
+		if (_v0) {
+			return model.angularMomentum + 0.5;
+		} else {
+			return model.angularMomentum;
+		}
+	}();
 	return {
 		body: _List_fromArray(
 			[
@@ -12422,13 +12465,41 @@ var $author$project$Arrow$view = function (model) {
 					entities: $elm$core$List$concat(
 						_List_fromArray(
 							[
-								$author$project$Arrow$arrows(model.angularMomentum),
-								A2($author$project$Arrow$ring, model.angularMomentum, 40),
-								A2($author$project$Arrow$ring2, model.angularMomentum, 40),
-								A2($author$project$Arrow$ring3, model.angularMomentum, 40),
+								$author$project$Arrow$arrows(angularMomentum),
+								A2($author$project$Arrow$ring, angularMomentum, 50),
+								A2($author$project$Arrow$ring2, angularMomentum, 50),
+								A2($author$project$Arrow$ring3, angularMomentum, 50),
 								$author$project$Arrow$coords
 							]))
 				}),
+				A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				$elm$core$List$concat(
+					_List_fromArray(
+						[
+							_List_fromArray(
+							[
+								$elm$html$Html$text('Choose l value: ')
+							]),
+							$author$project$Arrow$genLButtons(
+							A2($elm$core$List$range, 0, 10))
+						]))),
+				A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Total angular momentum'),
+						A2(
+						$elm$html$Html$input,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$type_('checkbox'),
+								$elm$html$Html$Events$onClick($author$project$Arrow$TotalAngular)
+							]),
+						_List_Nil)
+					])),
 				A2(
 				$elm$html$Html$div,
 				_List_Nil,
@@ -12450,19 +12521,20 @@ var $author$project$Arrow$view = function (model) {
 				_List_Nil,
 				_List_fromArray(
 					[
+						$elm$html$Html$text('Orbital angular momentum l = '),
 						A2(
 						$elm$html$Html$input,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$placeholder('1.0'),
+								$elm$html$Html$Attributes$placeholder('1'),
 								$elm$html$Html$Attributes$value(
-								$elm$core$String$fromFloat(model.angularMomentum)),
+								$elm$core$String$fromInt(model.angularMomentum)),
 								$elm$html$Html$Events$onInput($author$project$Arrow$Change)
 							]),
 						_List_Nil)
 					]))
 			]),
-		title: 'Test Mesh'
+		title: 'Vector Model for Angular Momenta (Quantum Mechanics)'
 	};
 };
 var $author$project$Arrow$main = $elm$browser$Browser$document(

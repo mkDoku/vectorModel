@@ -13,8 +13,8 @@ import Color
 import Cone3d
 import Cylinder3d
 import Direction3d
-import Html exposing (Html, div, text, button, input)
-import Html.Attributes exposing (value, placeholder)
+import Html exposing (Html, div, text, button, input, map)
+import Html.Attributes exposing (value, placeholder, type_, class)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as Decode exposing (Decoder)
 import Length
@@ -47,7 +47,8 @@ type alias Model =
     azimuth   : Angle
   , elevation : Angle
   , orbiting  : Bool
-  , angularMomentum : Float
+  , angularMomentum : Int
+  , isTotalAngularMomentum : Bool
   }
 
 type Msg
@@ -56,6 +57,8 @@ type Msg
     | MouseMove (Quantity Float Pixels) (Quantity Float Pixels)
     | Reset
     | Change String
+    | TotalAngular
+    | ChangeL Int
 
 toCartesian r phi =
   let
@@ -181,25 +184,29 @@ arrows l =
 
 init : () -> ( Model, Cmd Msg )
 init () =
-    -- ( { mesh = Mesh.indexedTriangles mesh1
     ( {
         azimuth  = Angle.degrees 45
       , elevation = Angle.degrees 30
       , orbiting  = False
-      , angularMomentum = 1.5
+      , angularMomentum = 1
+      , isTotalAngularMomentum = False
       }
     , Cmd.none
     )
 
 stupidConvert text =
-  case String.toFloat text of
+  case String.toInt text of
     Just val -> val
-    Nothing -> 1.0
+    Nothing -> 1
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update message model =
     case message of
-        -- Start orbiting when a mouse button is pressed
+        ChangeL l ->
+          ( { model | angularMomentum = l}, Cmd.none )
+        TotalAngular ->
+          ( { model | isTotalAngularMomentum = not model.isTotalAngularMomentum },
+          Cmd.none )
         Change amText ->
            ( { model | angularMomentum = stupidConvert amText }, Cmd.none )
         Reset ->
@@ -267,6 +274,10 @@ view model =
         -- Create a viewpoint by orbiting around a Z axis through the given
         -- focal point, with azimuth measured from the positive X direction
         -- towards positive Y
+        angularMomentum =
+          case model.isTotalAngularMomentum of
+            True -> (toFloat model.angularMomentum) + 0.5
+            False -> (toFloat model.angularMomentum)
         viewpoint =
             Viewpoint3d.orbitZ
                 { focalPoint = Point3d.meters 0 0 0
@@ -281,7 +292,7 @@ view model =
                 , verticalFieldOfView = Angle.degrees 30
                 }
     in
-    { title = "Test Mesh"
+    { title = "Vector Model for Angular Momenta (Quantum Mechanics)"
     , body =
         [
       Scene3d.unlit
@@ -290,23 +301,40 @@ view model =
             , dimensions = ( Pixels.int 800, Pixels.int 600 )
             , background = Scene3d.transparentBackground
             , entities = List.concat
-                          [ arrows model.angularMomentum
-                          , ring   model.angularMomentum 40
-                          , ring2  model.angularMomentum 40
-                          , ring3  model.angularMomentum 40
+                          [ arrows angularMomentum
+                          , ring   angularMomentum 50
+                          , ring2  angularMomentum 50
+                          , ring3  angularMomentum 50
                           , coords
                           ]
             }
         , div []
+          (List.concat [[ text "Choose l value: " ]
+          , genLButtons (List.range 0 10)
+          ])
+        , div []
+        [
+          text "Total angular momentum"
+        , input [ type_ "checkbox", onClick TotalAngular ] []
+        ]
+        , div []
             [ button [ onClick Reset ] [ text "xz-Projection" ]
             ]
         , div []
-            [ input [ placeholder "1.0"
-                    , value (String.fromFloat model.angularMomentum)
+            [ text "Orbital angular momentum l = "
+            , input [ placeholder "1"
+                    , value (String.fromInt model.angularMomentum)
                     , onInput Change ] []
             ]
+
         ]
     }
+
+-- genLButtons : [Int] -> [Html msg]
+genLButtons ls = List.map (genLButton) ls
+
+-- genLButton : Int -> Html msg
+genLButton l = button [ onClick (ChangeL l)] [ text (String.fromInt l)]
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
