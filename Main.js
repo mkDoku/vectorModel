@@ -11210,6 +11210,81 @@ var $ianmackenzie$elm_3d_camera$Camera3d$perspective = function (_arguments) {
 			viewpoint: _arguments.viewpoint
 		});
 };
+var $elm$core$String$concat = function (strings) {
+	return A2($elm$core$String$join, '', strings);
+};
+var $elm$core$String$fromFloat = _String_fromNumber;
+var $yotamDvir$elm_katex$Katex$Configs$Human = function (a) {
+	return {$: 'Human', a: a};
+};
+var $yotamDvir$elm_katex$Katex$Configs$human = $yotamDvir$elm_katex$Katex$Configs$Human;
+var $yotamDvir$elm_katex$Katex$human = A2($elm$core$Basics$composeL, $yotamDvir$elm_katex$Katex$Configs$human, $elm$core$Basics$always);
+var $author$project$Main$showResult = F2(
+	function (_v0, angularMomentum) {
+		var heading = _v0.a;
+		var _char = _v0.b;
+		var content = _v0.c;
+		var lengthText = function (c) {
+			return $elm$core$String$concat(
+				_List_fromArray(
+					['|\\vec{', c, '}| = \\sqrt{', c, '\\cdot(', c, '+ 1)} \\hbar']));
+		};
+		var length = $elm$core$Basics$sqrt(angularMomentum * (angularMomentum + 1));
+		return _List_fromArray(
+			[
+				A2(
+				$elm$html$Html$h2,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text(heading)
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				A2(
+					$elm$core$List$map,
+					$yotamDvir$elm_katex$Katex$generate($author$project$Main$htmlGenerator),
+					_List_fromArray(
+						[
+							$yotamDvir$elm_katex$Katex$human(content),
+							$yotamDvir$elm_katex$Katex$inline(_char),
+							$yotamDvir$elm_katex$Katex$human(' = '),
+							$yotamDvir$elm_katex$Katex$human(
+							$elm$core$String$fromFloat(angularMomentum))
+						]))),
+				A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				A2(
+					$elm$core$List$map,
+					$yotamDvir$elm_katex$Katex$generate($author$project$Main$htmlGenerator),
+					_List_fromArray(
+						[
+							$yotamDvir$elm_katex$Katex$inline(
+							lengthText(_char)),
+							$yotamDvir$elm_katex$Katex$human(' = '),
+							$yotamDvir$elm_katex$Katex$human(
+							$elm$core$String$fromFloat(length)),
+							$yotamDvir$elm_katex$Katex$inline('\\hbar')
+						])))
+			]);
+	});
+var $author$project$Main$results = function (model) {
+	var totalAngular = model.totalAngularMomentum;
+	var textL = 'orbital angular momentum ';
+	var textJ = 'total angular momentum ';
+	var orbitalAnuglar = model.angularMomentum;
+	var headingL = 'Orbital angular momentum';
+	var headingJ = 'Total angular momentum';
+	var charL = 'l';
+	var passL = _Utils_Tuple3(headingL, charL, textL);
+	var charJ = 'j';
+	var passJ = _Utils_Tuple3(headingJ, charJ, textJ);
+	return _Utils_ap(
+		A2($author$project$Main$showResult, passL, orbitalAnuglar),
+		A2($author$project$Main$showResult, passJ, totalAngular));
+};
 var $author$project$Main$toCartesianU = F3(
 	function (r, phi, direc) {
 		var y = r * $elm$core$Basics$sin(phi);
@@ -11245,95 +11320,6 @@ var $author$project$Main$ringU = F3(
 			$ianmackenzie$elm_3d_scene$Scene3d$lineSegment(color),
 			A2($elm$core$List$map, $ianmackenzie$elm_geometry$LineSegment3d$fromEndpoints, valuesT));
 	});
-var $elm$core$String$fromFloat = _String_fromNumber;
-var $yotamDvir$elm_katex$Katex$Configs$Human = function (a) {
-	return {$: 'Human', a: a};
-};
-var $yotamDvir$elm_katex$Katex$Configs$human = $yotamDvir$elm_katex$Katex$Configs$Human;
-var $yotamDvir$elm_katex$Katex$human = A2($elm$core$Basics$composeL, $yotamDvir$elm_katex$Katex$Configs$human, $elm$core$Basics$always);
-var $author$project$Main$goBlaBla = F3(
-	function (model, _v0, angularMomentum) {
-		var heading = _v0.a;
-		var _char = _v0.b;
-		var content = _v0.c;
-		var orbitalAnuglar = model.angularMomentum;
-		var lengthText = function (c) {
-			return '|\\vec{' + (c + ('}| = \\sqrt{' + (c + ('\\cdot(' + (c + '+ 1)} \\hbar')))));
-		};
-		var length = $elm$core$Basics$sqrt(angularMomentum * (angularMomentum + 1));
-		return _List_fromArray(
-			[
-				A2(
-				$elm$html$Html$h2,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$elm$html$Html$text(heading)
-					])),
-				A2(
-				$elm$html$Html$div,
-				_List_Nil,
-				_List_fromArray(
-					[
-						A2(
-						$yotamDvir$elm_katex$Katex$generate,
-						$author$project$Main$htmlGenerator,
-						$yotamDvir$elm_katex$Katex$human(content)),
-						A2(
-						$yotamDvir$elm_katex$Katex$generate,
-						$author$project$Main$htmlGenerator,
-						$yotamDvir$elm_katex$Katex$inline(_char)),
-						A2(
-						$yotamDvir$elm_katex$Katex$generate,
-						$author$project$Main$htmlGenerator,
-						$yotamDvir$elm_katex$Katex$human(' = ')),
-						A2(
-						$yotamDvir$elm_katex$Katex$generate,
-						$author$project$Main$htmlGenerator,
-						$yotamDvir$elm_katex$Katex$human(
-							$elm$core$String$fromFloat(angularMomentum)))
-					])),
-				A2(
-				$elm$html$Html$div,
-				_List_Nil,
-				_List_fromArray(
-					[
-						A2(
-						$yotamDvir$elm_katex$Katex$generate,
-						$author$project$Main$htmlGenerator,
-						$yotamDvir$elm_katex$Katex$inline(
-							lengthText(_char))),
-						A2(
-						$yotamDvir$elm_katex$Katex$generate,
-						$author$project$Main$htmlGenerator,
-						$yotamDvir$elm_katex$Katex$human(' = ')),
-						A2(
-						$yotamDvir$elm_katex$Katex$generate,
-						$author$project$Main$htmlGenerator,
-						$yotamDvir$elm_katex$Katex$human(
-							$elm$core$String$fromFloat(length))),
-						A2(
-						$yotamDvir$elm_katex$Katex$generate,
-						$author$project$Main$htmlGenerator,
-						$yotamDvir$elm_katex$Katex$inline('\\hbar'))
-					]))
-			]);
-	});
-var $author$project$Main$testValues = function (model) {
-	var totalAngular = model.totalAngularMomentum;
-	var textL = 'orbital angular momentum ';
-	var textJ = 'total angular momentum ';
-	var orbitalAnuglar = model.angularMomentum;
-	var headingL = 'Orbital angular momentum';
-	var headingJ = 'Total angular momentum';
-	var charL = 'l';
-	var passL = _Utils_Tuple3(headingL, charL, textL);
-	var charJ = 'j';
-	var passJ = _Utils_Tuple3(headingJ, charJ, textJ);
-	return _Utils_ap(
-		A3($author$project$Main$goBlaBla, model, passL, orbitalAnuglar),
-		A3($author$project$Main$goBlaBla, model, passJ, totalAngular));
-};
 var $ianmackenzie$elm_3d_scene$Scene3d$BackgroundColor = function (a) {
 	return {$: 'BackgroundColor', a: a};
 };
@@ -11393,9 +11379,6 @@ var $elm_explorations$webgl$WebGL$Internal$Stencil = function (a) {
 var $elm_explorations$webgl$WebGL$stencil = $elm_explorations$webgl$WebGL$Internal$Stencil;
 var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
-var $elm$core$String$concat = function (strings) {
-	return A2($elm$core$String$join, '', strings);
-};
 var $avh4$elm_color$Color$toCssString = function (_v0) {
 	var r = _v0.a;
 	var g = _v0.b;
@@ -12594,7 +12577,7 @@ var $author$project$Main$view = function (model) {
 							$elm$html$Html$text('Results')
 						]))
 				]),
-			$author$project$Main$testValues(model)),
+			$author$project$Main$results(model)),
 		title: 'Vector Model for Angular Momenta (Quantum Mechanics)'
 	};
 };

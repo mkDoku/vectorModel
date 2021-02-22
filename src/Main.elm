@@ -195,7 +195,7 @@ view model =
             [ button [ onClick Reset ] [ text "xz-Projection" ]
             ]
         , h1 [] [ text "Results" ]
-        ] ++ testValues model
+        ] ++ results model
 
     }
 
@@ -207,7 +207,7 @@ htmlGenerator isDisplayMode stringLatex =
         _ ->
             span [] [ text stringLatex ]
 
-testValues model =
+results model =
   let
         orbitalAnuglar = toFloat model.angularMomentum
         headingL = "Orbital angular momentum"
@@ -222,58 +222,27 @@ testValues model =
         passJ = (headingJ, charJ, textJ)
 
   in
-         goBlaBla model passL orbitalAnuglar
-      ++ goBlaBla model passJ totalAngular
+         showResult passL orbitalAnuglar
+      ++ showResult passJ totalAngular
 
-goBlaBla model (heading, char, content) angularMomentum =
+showResult (heading, char, content) angularMomentum =
    let
-       orbitalAnuglar = toFloat model.angularMomentum
        length = sqrt ( angularMomentum * (angularMomentum + 1))
-       lengthText c = ("|\\vec{"
-                         ++ c
-                         ++ "}| = \\sqrt{"
-                         ++ c
-                         ++ "\\cdot("
-                         ++ c
-                         ++ "+ 1)} \\hbar")
+       lengthText c = String.concat
+         [ "|\\vec{",c,"}| = \\sqrt{",c,"\\cdot(",c,"+ 1)} \\hbar" ]
    in
        [ h2 [] [ text heading ]
-        , div []
-            [
-              (K.generate htmlGenerator) <| human content
-            , (K.generate htmlGenerator) <| inline char
-            , (K.generate htmlGenerator) <| human " = "
-            , (K.generate htmlGenerator) <| human (String.fromFloat angularMomentum)
-            ]
-        , div []
-            [
-              (K.generate htmlGenerator)
-                  <| inline (lengthText char)
-            , (K.generate htmlGenerator) <| human " = "
-            , (K.generate htmlGenerator) <| human (String.fromFloat length)
-            , (K.generate htmlGenerator) <| inline "\\hbar"
-            ]
+        , [ human content
+          , inline char
+          , human " = "
+          , human (String.fromFloat angularMomentum)
+          ] |> List.map (K.generate htmlGenerator) |> div []
+        , [ inline (lengthText char)
+          , human " = "
+          , human (String.fromFloat length)
+          , inline "\\hbar"
+          ] |> List.map (K.generate htmlGenerator) |> div []
         ]
- 
-goBla model = [ h2 [] [ text "Total angular momentum" ]
-        , div []
-            [ (K.generate htmlGenerator) <| human "Orbital angular momentum "
-            , (K.generate htmlGenerator) <| inline "j"
-            , (K.generate htmlGenerator) <| human " = "
-            , (K.generate htmlGenerator) <| human (String.fromFloat ((toFloat
-            model.angularMomentum) + 0.5 ))
-            ]
-        , div []
-            [
-              (K.generate htmlGenerator) <| inline "|\\vec{j}| = \\sqrt{j\\cdot(j + 1)} \\hbar"
-            , (K.generate htmlGenerator) <| human " = "
-            , (K.generate htmlGenerator) <| human (String.fromFloat
-                                                  ( sqrt ( model.totalAngularMomentum * (
-                                                    model.totalAngularMomentum + 1)))
-                                                  )
-            , (K.generate htmlGenerator) <| inline "\\hbar"
-            ]
-          ]
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
