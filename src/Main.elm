@@ -30,15 +30,7 @@ import Triangle3d
 import TriangularMesh
 import Viewpoint3d
 
-main : Program () Model Msg
-main =
-  Browser.document
-    { init = init
-    , update = update
-    , view = view
-    , subscriptions = subscriptions
-    }
-
+--- type definitions ---
 type WorldCoordinates
     = WorldCoordinates
 
@@ -48,6 +40,7 @@ type alias Model =
   , elevation : Angle
   , orbiting  : Bool
   , angularMomentum : Int
+  , totalAngularMomentum : Float
   , isTotalAngularMomentum : Bool
   }
 
@@ -62,100 +55,19 @@ type Msg
 type Direction
   = X | Y | Z
 
-toCartesianU r phi direc =
-  let
-      x = r * (cos phi)
-      y = r * (sin phi)
-  in
-      case direc of
-        X -> Point3d.meters x y 0
-        Y -> Point3d.meters 0 x y
-        Z -> Point3d.meters x 0 y
-
-ringU l numSeg direc =
-  let
-      len = sqrt ( l * ( l + 1 ) )
-      step = 2 * pi / (toFloat numSeg)
-      color = Material.color Color.blue
-
-      values = List.map toFloat <| List.range 0 numSeg
-      valuesT = List.map (\x -> (toCartesianU len (x*step) direc
-                               , toCartesianU len ((x+1)*step) direc )) values
-  in
-      List.map (Scene3d.lineSegment color)
-        <| List.map (LineSegment3d.fromEndpoints) valuesT
-
-coords =
-  let
-      len1 = Length.meters (-15)
-      len2 = Length.meters 15
-
-      xcoord = LineSegment3d.along Axis3d.x len1 len2
-      ycoord = LineSegment3d.along Axis3d.y len1 len2
-      zcoord = LineSegment3d.along Axis3d.z len1 len2
-
-      color = Material.color Color.blue
-  in
-      List.map (Scene3d.lineSegment color) [xcoord, ycoord, zcoord]
+type AngularMomentum
+  = L | J
 
 
-
--- getCoord : Float -> Float -> (Point3d Meters WorldCoordinates)
-getCoord l ml =
-  let
-      len = sqrt ( l * ( l + 1 ) )
-      phi = asin ( ml / len )
-      y = len * (cos phi)
-      z = len * (sin phi)
-  in
-      Point3d.meters 0 y z
-
-testCone l ml len dir color =
-    let
-       tmp = Cone3d.along dir
-              { base   = Length.meters (0.9 * len)
-              , tip    = Length.meters len
-              , radius = Length.meters 0.05
-              }
-    in Scene3d.cone color tmp
-
-
-testCylinder l ml len dir color =
-  let
-       tmp = Cylinder3d.along dir
-              { start  = Length.meters 0.0
-              , end    = Length.meters (0.9 * len)
-              , radius = Length.meters 0.02
-              }
-    in Scene3d.cylinder color tmp
-
-arrow l ml len color =
-    let
-        origin = Point3d.meters 0 0 0
-        dir =
-         case Axis3d.throughPoints origin (getCoord l ml) of
-           Just ret -> ret
-           Nothing -> Axis3d.z
-    in [ (testCone     l ml len dir color)
-       , (testCylinder l ml len dir color)
-       ]
-
-
-genList l = genListHelp (-l) l []
-
-genListHelp l lmax ls =
-  case (l == lmax) of
-    True -> [l] ++ ls
-    False -> [l] ++ (genListHelp (l+1) lmax ls)
-
-arrows l =
-  let
-      len = sqrt ( l * ( l + 1 ) )
-      color = Material.color Color.blue
-      tmp = genList l
-  in
-      List.concat
-        <| List.map (\ml -> arrow l ml len color) tmp
+--- main ---
+main : Program () Model Msg
+main =
+  Browser.document
+    { init = init
+    , update = update
+    , view = view
+    , subscriptions = subscriptions
+    }
 
 init : () -> ( Model, Cmd Msg )
 init () =
@@ -164,21 +76,20 @@ init () =
       , elevation = Angle.degrees 30
       , orbiting  = False
       , angularMomentum = 1
+      , totalAngularMomentum = 1.5
       , isTotalAngularMomentum = False
       }
     , Cmd.none
     )
 
-stupidConvert text =
-  case String.toInt text of
-    Just val -> val
-    Nothing -> 1
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update message model =
     case message of
         ChangeL l ->
-          ( { model | angularMomentum = l}, Cmd.none )
+          ( { model |   angularMomentum = l
+                      , totalAngularMomentum = ((toFloat l) + 0.5)
+            }
+          , Cmd.none )
         TotalAngular ->
           ( { model | isTotalAngularMomentum = not model.isTotalAngularMomentum },
           Cmd.none )
@@ -224,14 +135,6 @@ update message model =
             else
                 ( model, Cmd.none )
 
-{-| Use movementX and movementY for simplicity (don't need to store initial
-mouse position in the model) - not supported in Internet Explorer though
--}
-decodeMouseMove : Decoder Msg
-decodeMouseMove =
-    Decode.map2 MouseMove
-        (Decode.field "movementX" (Decode.map Pixels.float Decode.float))
-        (Decode.field "movementY" (Decode.map Pixels.float Decode.float))
 
 view : Model -> Browser.Document Msg
 view model =
@@ -243,8 +146,6 @@ view model =
           case model.isTotalAngularMomentum of
             True -> (toFloat model.angularMomentum) + 0.5
             False -> (toFloat model.angularMomentum)
-        totalAngular = (toFloat model.angularMomentum) + 0.5
-        orbitalAnuglar = toFloat model.angularMomentum
         viewpoint =
             Viewpoint3d.orbitZ
                 { focalPoint = Point3d.meters 0 0 0
@@ -258,13 +159,6 @@ view model =
                 { viewpoint = viewpoint
                 , verticalFieldOfView = Angle.degrees 30
                 }
-        htmlGenerator isDisplayMode stringLatex =
-            case isDisplayMode of
-                Just True ->
-                    div [] [ text stringLatex ]
-
-                _ ->
-                    span [] [ text stringLatex ]
     in
     { title = "Vector Model for Angular Momenta (Quantum Mechanics)"
     , body =
@@ -301,24 +195,67 @@ view model =
             [ button [ onClick Reset ] [ text "xz-Projection" ]
             ]
         , h1 [] [ text "Results" ]
-        , h2 [] [ text "Orbital angular momentum" ]
+        ] ++ testValues model
+
+    }
+
+htmlGenerator isDisplayMode stringLatex =
+    case isDisplayMode of
+        Just True ->
+            div [] [ text stringLatex ]
+
+        _ ->
+            span [] [ text stringLatex ]
+
+testValues model =
+  let
+        orbitalAnuglar = toFloat model.angularMomentum
+        headingL = "Orbital angular momentum"
+        charL = "l"
+        textL = "orbital angular momentum "
+        passL = (headingL, charL, textL)
+
+        totalAngular = model.totalAngularMomentum
+        headingJ = "Total angular momentum"
+        charJ = "j"
+        textJ = "total angular momentum "
+        passJ = (headingJ, charJ, textJ)
+
+  in
+         goBlaBla model passL orbitalAnuglar
+      ++ goBlaBla model passJ totalAngular
+
+goBlaBla model (heading, char, content) angularMomentum =
+   let
+       orbitalAnuglar = toFloat model.angularMomentum
+       length = sqrt ( angularMomentum * (angularMomentum + 1))
+       lengthText c = ("|\\vec{"
+                         ++ c
+                         ++ "}| = \\sqrt{"
+                         ++ c
+                         ++ "\\cdot("
+                         ++ c
+                         ++ "+ 1)} \\hbar")
+   in
+       [ h2 [] [ text heading ]
         , div []
             [
-              (K.generate htmlGenerator) <| inline "l"
+              (K.generate htmlGenerator) <| human content
+            , (K.generate htmlGenerator) <| inline char
             , (K.generate htmlGenerator) <| human " = "
-            , (K.generate htmlGenerator) <| human (String.fromInt model.angularMomentum)
+            , (K.generate htmlGenerator) <| human (String.fromFloat angularMomentum)
             ]
         , div []
             [
-              (K.generate htmlGenerator) <| inline "|\\vec{l}| = \\sqrt{l\\cdot(l + 1)} \\hbar"
+              (K.generate htmlGenerator)
+                  <| inline (lengthText char)
             , (K.generate htmlGenerator) <| human " = "
-            , (K.generate htmlGenerator) <| human (String.fromFloat
-                                                  ( sqrt ( orbitalAnuglar * (
-                                                    orbitalAnuglar + 1)))
-                                                  )
+            , (K.generate htmlGenerator) <| human (String.fromFloat length)
             , (K.generate htmlGenerator) <| inline "\\hbar"
             ]
-        , h2 [] [ text "Total angular momentum" ]
+        ]
+ 
+goBla model = [ h2 [] [ text "Total angular momentum" ]
         , div []
             [ (K.generate htmlGenerator) <| human "Orbital angular momentum "
             , (K.generate htmlGenerator) <| inline "j"
@@ -331,20 +268,12 @@ view model =
               (K.generate htmlGenerator) <| inline "|\\vec{j}| = \\sqrt{j\\cdot(j + 1)} \\hbar"
             , (K.generate htmlGenerator) <| human " = "
             , (K.generate htmlGenerator) <| human (String.fromFloat
-                                                  ( sqrt ( totalAngular * (
-                                                    totalAngular + 1)))
+                                                  ( sqrt ( model.totalAngularMomentum * (
+                                                    model.totalAngularMomentum + 1)))
                                                   )
             , (K.generate htmlGenerator) <| inline "\\hbar"
             ]
-        ]
-    }
-
-
--- genLButtons : [Int] -> [Html msg]
-genLButtons ls = List.map (genLButton) ls
-
--- genLButton : Int -> Html msg
-genLButton l = button [ onClick (ChangeL l)] [ text (String.fromInt l)]
+          ]
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -362,3 +291,114 @@ subscriptions model =
         -- If we're not currently orbiting, just listen for mouse down events
         -- to start orbiting
         Browser.Events.onMouseDown (Decode.succeed MouseDown)
+
+---- Helper functions -------
+
+toCartesianU r phi direc =
+  let
+      x = r * (cos phi)
+      y = r * (sin phi)
+  in
+      case direc of
+        X -> Point3d.meters x y 0
+        Y -> Point3d.meters 0 x y
+        Z -> Point3d.meters x 0 y
+
+ringU l numSeg direc =
+  let
+      len = sqrt ( l * ( l + 1 ) )
+      step = 2 * pi / (toFloat numSeg)
+      color = Material.color Color.blue
+
+      values = List.map toFloat <| List.range 0 numSeg
+      valuesT = List.map (\x -> (toCartesianU len (x*step) direc
+                               , toCartesianU len ((x+1)*step) direc )) values
+  in
+      List.map (Scene3d.lineSegment color)
+        <| List.map (LineSegment3d.fromEndpoints) valuesT
+
+coords =
+  let
+      len1 = Length.meters (-15)
+      len2 = Length.meters 15
+
+      xcoord = LineSegment3d.along Axis3d.x len1 len2
+      ycoord = LineSegment3d.along Axis3d.y len1 len2
+      zcoord = LineSegment3d.along Axis3d.z len1 len2
+
+      color = Material.color Color.black
+  in
+      List.map (Scene3d.lineSegment color) [xcoord, ycoord, zcoord]
+
+
+
+-- getCoord : Float -> Float -> (Point3d Meters WorldCoordinates)
+getCoord l ml =
+  let
+      len = sqrt ( l * ( l + 1 ) )
+      phi = asin ( ml / len )
+      y = len * (cos phi)
+      z = len * (sin phi)
+  in
+      Point3d.meters 0 y z
+
+arrowHead l ml len dir color =
+    let
+       tmp = Cone3d.along dir
+              { base   = Length.meters (0.9 * len)
+              , tip    = Length.meters len
+              , radius = Length.meters 0.05
+              }
+    in Scene3d.cone color tmp
+
+
+arrowBody l ml len dir color =
+  let
+       tmp = Cylinder3d.along dir
+              { start  = Length.meters 0.0
+              , end    = Length.meters (0.9 * len)
+              , radius = Length.meters 0.02
+              }
+    in Scene3d.cylinder color tmp
+
+arrow l ml len color =
+    let
+        origin = Point3d.meters 0 0 0
+        dir =
+         case Axis3d.throughPoints origin (getCoord l ml) of
+           Just ret -> ret
+           Nothing -> Axis3d.z
+    in [ (arrowHead l ml len dir color)
+       , (arrowBody l ml len dir color)
+       ]
+
+
+genList l = genListHelp (-l) l []
+
+genListHelp l lmax ls =
+  case (l == lmax) of
+    True -> [l] ++ ls
+    False -> [l] ++ (genListHelp (l+1) lmax ls)
+
+arrows l =
+  let
+      len = sqrt ( l * ( l + 1 ) )
+      color = Material.color Color.blue
+      tmp = genList l
+  in
+      List.concat
+        <| List.map (\ml -> arrow l ml len color) tmp
+{-| Use movementX and movementY for simplicity (don't need to store initial
+mouse position in the model) - not supported in Internet Explorer though
+-}
+decodeMouseMove : Decoder Msg
+decodeMouseMove =
+    Decode.map2 MouseMove
+        (Decode.field "movementX" (Decode.map Pixels.float Decode.float))
+        (Decode.field "movementY" (Decode.map Pixels.float Decode.float))
+
+-- genLButtons : [Int] -> [Html msg]
+genLButtons ls = List.map (genLButton) ls
+
+-- genLButton : Int -> Html msg
+genLButton l = button [ onClick (ChangeL l)] [ text (String.fromInt l)]
