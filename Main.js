@@ -7608,6 +7608,9 @@ var $author$project$Main$update = F2(
 	});
 var $author$project$Main$Reset = {$: 'Reset'};
 var $author$project$Main$TotalAngular = {$: 'TotalAngular'};
+var $author$project$Main$X = {$: 'X'};
+var $author$project$Main$Y = {$: 'Y'};
+var $author$project$Main$Z = {$: 'Z'};
 var $elm$core$Basics$asin = _Basics_asin;
 var $elm$core$Basics$cos = _Basics_cos;
 var $ianmackenzie$elm_geometry$Geometry$Types$Point3d = function (a) {
@@ -7628,7 +7631,6 @@ var $author$project$Main$getCoord = F2(
 		var z = len * $elm$core$Basics$sin(phi);
 		return A3($ianmackenzie$elm_geometry$Point3d$meters, 0, y, z);
 	});
-var $author$project$Main$origin = A3($ianmackenzie$elm_geometry$Point3d$meters, 0, 0, 0);
 var $ianmackenzie$elm_geometry$Geometry$Types$Cone3d = function (a) {
 	return {$: 'Cone3d', a: a};
 };
@@ -10606,10 +10608,11 @@ var $ianmackenzie$elm_geometry$Direction3d$z = $ianmackenzie$elm_geometry$Direct
 var $ianmackenzie$elm_geometry$Axis3d$z = A2($ianmackenzie$elm_geometry$Axis3d$through, $ianmackenzie$elm_geometry$Point3d$origin, $ianmackenzie$elm_geometry$Direction3d$z);
 var $author$project$Main$arrow = F4(
 	function (l, ml, len, color) {
+		var origin = A3($ianmackenzie$elm_geometry$Point3d$meters, 0, 0, 0);
 		var dir = function () {
 			var _v0 = A2(
 				$ianmackenzie$elm_geometry$Axis3d$throughPoints,
-				$author$project$Main$origin,
+				origin,
 				A2($author$project$Main$getCoord, l, ml));
 			if (_v0.$ === 'Just') {
 				var ret = _v0.a;
@@ -11190,14 +11193,21 @@ var $ianmackenzie$elm_3d_camera$Camera3d$perspective = function (_arguments) {
 			viewpoint: _arguments.viewpoint
 		});
 };
-var $author$project$Main$toCartesian = F2(
-	function (r, phi) {
+var $author$project$Main$toCartesianU = F3(
+	function (r, phi, direc) {
 		var y = r * $elm$core$Basics$sin(phi);
 		var x = r * $elm$core$Basics$cos(phi);
-		return A3($ianmackenzie$elm_geometry$Point3d$meters, x, y, 0);
+		switch (direc.$) {
+			case 'X':
+				return A3($ianmackenzie$elm_geometry$Point3d$meters, x, y, 0);
+			case 'Y':
+				return A3($ianmackenzie$elm_geometry$Point3d$meters, 0, x, y);
+			default:
+				return A3($ianmackenzie$elm_geometry$Point3d$meters, x, 0, y);
+		}
 	});
-var $author$project$Main$ring = F2(
-	function (l, numSeg) {
+var $author$project$Main$ringU = F3(
+	function (l, numSeg, direc) {
 		var values = A2(
 			$elm$core$List$map,
 			$elm$core$Basics$toFloat,
@@ -11208,64 +11218,8 @@ var $author$project$Main$ring = F2(
 			$elm$core$List$map,
 			function (x) {
 				return _Utils_Tuple2(
-					A2($author$project$Main$toCartesian, len, x * step),
-					A2($author$project$Main$toCartesian, len, (x + 1) * step));
-			},
-			values);
-		var color = $ianmackenzie$elm_3d_scene$Scene3d$Material$color($avh4$elm_color$Color$blue);
-		return A2(
-			$elm$core$List$map,
-			$ianmackenzie$elm_3d_scene$Scene3d$lineSegment(color),
-			A2($elm$core$List$map, $ianmackenzie$elm_geometry$LineSegment3d$fromEndpoints, valuesT));
-	});
-var $author$project$Main$toCartesian2 = F2(
-	function (r, phi) {
-		var z = r * $elm$core$Basics$sin(phi);
-		var y = r * $elm$core$Basics$cos(phi);
-		return A3($ianmackenzie$elm_geometry$Point3d$meters, 0, y, z);
-	});
-var $author$project$Main$ring2 = F2(
-	function (l, numSeg) {
-		var values = A2(
-			$elm$core$List$map,
-			$elm$core$Basics$toFloat,
-			A2($elm$core$List$range, 0, numSeg));
-		var step = (2 * $elm$core$Basics$pi) / numSeg;
-		var len = $elm$core$Basics$sqrt(l * (l + 1));
-		var valuesT = A2(
-			$elm$core$List$map,
-			function (x) {
-				return _Utils_Tuple2(
-					A2($author$project$Main$toCartesian2, len, x * step),
-					A2($author$project$Main$toCartesian2, len, (x + 1) * step));
-			},
-			values);
-		var color = $ianmackenzie$elm_3d_scene$Scene3d$Material$color($avh4$elm_color$Color$blue);
-		return A2(
-			$elm$core$List$map,
-			$ianmackenzie$elm_3d_scene$Scene3d$lineSegment(color),
-			A2($elm$core$List$map, $ianmackenzie$elm_geometry$LineSegment3d$fromEndpoints, valuesT));
-	});
-var $author$project$Main$toCartesian3 = F2(
-	function (r, phi) {
-		var z = r * $elm$core$Basics$sin(phi);
-		var x = r * $elm$core$Basics$cos(phi);
-		return A3($ianmackenzie$elm_geometry$Point3d$meters, x, 0, z);
-	});
-var $author$project$Main$ring3 = F2(
-	function (l, numSeg) {
-		var values = A2(
-			$elm$core$List$map,
-			$elm$core$Basics$toFloat,
-			A2($elm$core$List$range, 0, numSeg));
-		var step = (2 * $elm$core$Basics$pi) / numSeg;
-		var len = $elm$core$Basics$sqrt(l * (l + 1));
-		var valuesT = A2(
-			$elm$core$List$map,
-			function (x) {
-				return _Utils_Tuple2(
-					A2($author$project$Main$toCartesian3, len, x * step),
-					A2($author$project$Main$toCartesian3, len, (x + 1) * step));
+					A3($author$project$Main$toCartesianU, len, x * step, direc),
+					A3($author$project$Main$toCartesianU, len, (x + 1) * step, direc));
 			},
 			values);
 		var color = $ianmackenzie$elm_3d_scene$Scene3d$Material$color($avh4$elm_color$Color$blue);
@@ -12466,9 +12420,9 @@ var $author$project$Main$view = function (model) {
 						_List_fromArray(
 							[
 								$author$project$Main$arrows(angularMomentum),
-								A2($author$project$Main$ring, angularMomentum, 50),
-								A2($author$project$Main$ring2, angularMomentum, 50),
-								A2($author$project$Main$ring3, angularMomentum, 50),
+								A3($author$project$Main$ringU, angularMomentum, 50, $author$project$Main$X),
+								A3($author$project$Main$ringU, angularMomentum, 50, $author$project$Main$Y),
+								A3($author$project$Main$ringU, angularMomentum, 50, $author$project$Main$Z),
 								$author$project$Main$coords
 							]))
 				}),
@@ -12478,13 +12432,6 @@ var $author$project$Main$view = function (model) {
 				_List_fromArray(
 					[
 						$elm$html$Html$text('Control')
-					])),
-				A2(
-				$elm$html$Html$h2,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$elm$html$Html$text('Values')
 					])),
 				A2(
 				$elm$html$Html$div,
@@ -12506,10 +12453,24 @@ var $author$project$Main$view = function (model) {
 							_List_fromArray(
 							[
 								$elm$html$Html$text(': ')
-							]),
+							])
+						]))),
+				A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				$elm$core$List$concat(
+					_List_fromArray(
+						[
 							$author$project$Main$genLButtons(
 							A2($elm$core$List$range, 0, 10))
 						]))),
+				A2(
+				$elm$html$Html$h2,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('View')
+					])),
 				A2(
 				$elm$html$Html$div,
 				_List_Nil,
@@ -12524,13 +12485,6 @@ var $author$project$Main$view = function (model) {
 								$elm$html$Html$Events$onClick($author$project$Main$TotalAngular)
 							]),
 						_List_Nil)
-					])),
-				A2(
-				$elm$html$Html$h2,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$elm$html$Html$text('View')
 					])),
 				A2(
 				$elm$html$Html$div,

@@ -59,53 +59,28 @@ type Msg
     | TotalAngular
     | ChangeL Int
 
-toCartesian r phi =
+type Direction
+  = X | Y | Z
+
+toCartesianU r phi direc =
   let
       x = r * (cos phi)
       y = r * (sin phi)
-  in Point3d.meters x y 0
-
-toCartesian2 r phi =
-  let
-      y = r * (cos phi)
-      z = r * (sin phi)
-  in Point3d.meters 0 y z
-
-toCartesian3 r phi =
-  let
-      x = r * (cos phi)
-      z = r * (sin phi)
-  in Point3d.meters x 0 z
-
-ring l numSeg =
-  let
-      len = sqrt ( l * ( l + 1 ) )
-      step = 2 * pi / (toFloat numSeg)
-      color = Material.color Color.blue
-      values = List.map toFloat <| List.range 0 numSeg
-      valuesT = List.map (\x -> (toCartesian len (x*step), toCartesian len ((x+1)*step))) values
   in
-      List.map (Scene3d.lineSegment color)
-        <| List.map (LineSegment3d.fromEndpoints) valuesT
+      case direc of
+        X -> Point3d.meters x y 0
+        Y -> Point3d.meters 0 x y
+        Z -> Point3d.meters x 0 y
 
-ring2 l numSeg =
+ringU l numSeg direc =
   let
       len = sqrt ( l * ( l + 1 ) )
       step = 2 * pi / (toFloat numSeg)
       color = Material.color Color.blue
-      values = List.map toFloat <| List.range 0 numSeg
-      valuesT = List.map (\x -> (toCartesian2 len (x*step), toCartesian2 len ((x+1)*step))) values
-  in
-      List.map (Scene3d.lineSegment color)
-        <| List.map (LineSegment3d.fromEndpoints) valuesT
 
-ring3 l numSeg =
-  let
-      len = sqrt ( l * ( l + 1 ) )
-      step = 2 * pi / (toFloat numSeg)
-      color = Material.color Color.blue
       values = List.map toFloat <| List.range 0 numSeg
-      valuesT = List.map (\x -> (toCartesian3 len (x*step), toCartesian3 len ((x+1)*step))) values
+      valuesT = List.map (\x -> (toCartesianU len (x*step) direc
+                               , toCartesianU len ((x+1)*step) direc )) values
   in
       List.map (Scene3d.lineSegment color)
         <| List.map (LineSegment3d.fromEndpoints) valuesT
@@ -124,7 +99,6 @@ coords =
       List.map (Scene3d.lineSegment color) [xcoord, ycoord, zcoord]
 
 
-origin = Point3d.meters 0 0 0
 
 -- getCoord : Float -> Float -> (Point3d Meters WorldCoordinates)
 getCoord l ml =
@@ -156,7 +130,9 @@ testCylinder l ml len dir color =
     in Scene3d.cylinder color tmp
 
 arrow l ml len color =
-    let dir =
+    let
+        origin = Point3d.meters 0 0 0
+        dir =
          case Axis3d.throughPoints origin (getCoord l ml) of
            Just ret -> ret
            Nothing -> Axis3d.z
@@ -257,14 +233,6 @@ decodeMouseMove =
         (Decode.field "movementX" (Decode.map Pixels.float Decode.float))
         (Decode.field "movementY" (Decode.map Pixels.float Decode.float))
 
-gold :  Material.Uniform WorldCoordinates
-gold = Material.nonmetal
-               { baseColor = Color.rgb255 255 195 86
-               , roughness = 0.4
-               }
-
-
-
 view : Model -> Browser.Document Msg
 view model =
     let
@@ -308,27 +276,27 @@ view model =
             , background = Scene3d.transparentBackground
             , entities = List.concat
                           [ arrows angularMomentum
-                          , ring   angularMomentum 50
-                          , ring2  angularMomentum 50
-                          , ring3  angularMomentum 50
+                          , ringU angularMomentum 50 X
+                          , ringU angularMomentum 50 Y
+                          , ringU angularMomentum 50 Z
                           , coords
                           ]
             }
         , h1 [] [ text "Control" ]
-        , h2 [] [ text "Values" ]
         , div []
           (List.concat [
             [ text "Choose orbital angular momentum " ]
           , [ (K.generate htmlGenerator) <| inline "l" ]
           , [ text ": " ]
-          , genLButtons (List.range 0 10)
+         -- , genLButtons (List.range 0 10)
           ])
+        , div [] (List.concat [ genLButtons (List.range 0 10) ] )
+        , h2 [] [ text "View" ]
         , div []
         [
           text "Show total angular momentum: "
         , input [ type_ "checkbox", onClick TotalAngular ] []
         ]
-        , h2 [] [ text "View" ]
         , div []
             [ button [ onClick Reset ] [ text "xz-Projection" ]
             ]
