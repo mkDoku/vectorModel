@@ -1,4 +1,4 @@
-module Arrow exposing (..)
+module Main exposing (..)
 
 {-| This example is very similar to the HelloWorld example but shows how to
 render individual triangles.
@@ -13,10 +13,11 @@ import Color
 import Cone3d
 import Cylinder3d
 import Direction3d
-import Html exposing (Html, div, text, button, input, map)
-import Html.Attributes exposing (value, placeholder, type_, class)
+import Html exposing (Html, span, div, text, button, input, map, output, hr, h1, h2, h3)
+import Html.Attributes exposing (value, placeholder, type_, class, style)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as Decode exposing (Decoder)
+import Katex as K exposing ( Latex, human, inline, display, print)
 import Length
 import LineSegment3d
 import Pixels exposing (Pixels)
@@ -28,7 +29,6 @@ import Scene3d.Mesh as Mesh exposing (Mesh)
 import Triangle3d
 import TriangularMesh
 import Viewpoint3d
-
 
 main : Program () Model Msg
 main =
@@ -56,7 +56,6 @@ type Msg
     | MouseUp
     | MouseMove (Quantity Float Pixels) (Quantity Float Pixels)
     | Reset
-    | Change String
     | TotalAngular
     | ChangeL Int
 
@@ -113,8 +112,8 @@ ring3 l numSeg =
 
 coords =
   let
-      len1 = Length.meters (-5)
-      len2 = Length.meters 5
+      len1 = Length.meters (-15)
+      len2 = Length.meters 15
 
       xcoord = LineSegment3d.along Axis3d.x len1 len2
       ycoord = LineSegment3d.along Axis3d.y len1 len2
@@ -207,8 +206,6 @@ update message model =
         TotalAngular ->
           ( { model | isTotalAngularMomentum = not model.isTotalAngularMomentum },
           Cmd.none )
-        Change amText ->
-           ( { model | angularMomentum = stupidConvert amText }, Cmd.none )
         Reset ->
             ( { model |   azimuth = Angle.degrees 0
                         , elevation = Angle.degrees 0
@@ -267,7 +264,7 @@ gold = Material.nonmetal
                }
 
 
---
+
 view : Model -> Browser.Document Msg
 view model =
     let
@@ -278,6 +275,8 @@ view model =
           case model.isTotalAngularMomentum of
             True -> (toFloat model.angularMomentum) + 0.5
             False -> (toFloat model.angularMomentum)
+        totalAngular = (toFloat model.angularMomentum) + 0.5
+        orbitalAnuglar = toFloat model.angularMomentum
         viewpoint =
             Viewpoint3d.orbitZ
                 { focalPoint = Point3d.meters 0 0 0
@@ -291,6 +290,13 @@ view model =
                 { viewpoint = viewpoint
                 , verticalFieldOfView = Angle.degrees 30
                 }
+        htmlGenerator isDisplayMode stringLatex =
+            case isDisplayMode of
+                Just True ->
+                    div [] [ text stringLatex ]
+
+                _ ->
+                    span [] [ text stringLatex ]
     in
     { title = "Vector Model for Angular Momenta (Quantum Mechanics)"
     , body =
@@ -308,27 +314,63 @@ view model =
                           , coords
                           ]
             }
+        , h1 [] [ text "Control" ]
+        , h2 [] [ text "Values" ]
         , div []
-          (List.concat [[ text "Choose l value: " ]
+          (List.concat [
+            [ text "Choose orbital angular momentum " ]
+          , [ (K.generate htmlGenerator) <| inline "l" ]
+          , [ text ": " ]
           , genLButtons (List.range 0 10)
           ])
         , div []
         [
-          text "Total angular momentum"
+          text "Show total angular momentum: "
         , input [ type_ "checkbox", onClick TotalAngular ] []
         ]
+        , h2 [] [ text "View" ]
         , div []
             [ button [ onClick Reset ] [ text "xz-Projection" ]
             ]
+        , h1 [] [ text "Results" ]
+        , h2 [] [ text "Orbital angular momentum" ]
         , div []
-            [ text "Orbital angular momentum l = "
-            , input [ placeholder "1"
-                    , value (String.fromInt model.angularMomentum)
-                    , onInput Change ] []
+            [
+              (K.generate htmlGenerator) <| inline "l"
+            , (K.generate htmlGenerator) <| human " = "
+            , (K.generate htmlGenerator) <| human (String.fromInt model.angularMomentum)
             ]
-
+        , div []
+            [
+              (K.generate htmlGenerator) <| inline "|\\vec{l}| = \\sqrt{l\\cdot(l + 1)} \\hbar"
+            , (K.generate htmlGenerator) <| human " = "
+            , (K.generate htmlGenerator) <| human (String.fromFloat
+                                                  ( sqrt ( orbitalAnuglar * (
+                                                    orbitalAnuglar + 1)))
+                                                  )
+            , (K.generate htmlGenerator) <| inline "\\hbar"
+            ]
+        , h2 [] [ text "Total angular momentum" ]
+        , div []
+            [ (K.generate htmlGenerator) <| human "Orbital angular momentum "
+            , (K.generate htmlGenerator) <| inline "j"
+            , (K.generate htmlGenerator) <| human " = "
+            , (K.generate htmlGenerator) <| human (String.fromFloat ((toFloat
+            model.angularMomentum) + 0.5 ))
+            ]
+        , div []
+            [
+              (K.generate htmlGenerator) <| inline "|\\vec{j}| = \\sqrt{j\\cdot(j + 1)} \\hbar"
+            , (K.generate htmlGenerator) <| human " = "
+            , (K.generate htmlGenerator) <| human (String.fromFloat
+                                                  ( sqrt ( totalAngular * (
+                                                    totalAngular + 1)))
+                                                  )
+            , (K.generate htmlGenerator) <| inline "\\hbar"
+            ]
         ]
     }
+
 
 -- genLButtons : [Int] -> [Html msg]
 genLButtons ls = List.map (genLButton) ls
