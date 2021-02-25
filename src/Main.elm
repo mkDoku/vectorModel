@@ -36,6 +36,7 @@ import Svg exposing (Svg)
 import Svg.Attributes
 import Triangle3d
 import TriangularMesh
+import Vector3d
 import Viewpoint3d
 
 
@@ -222,6 +223,10 @@ view model =
                         , ringU angularMomentum 50 Y
                         , ringU angularMomentum 50 Z
                         , coords
+                        , dashedLines angularMomentum 50
+
+                        -- dashes
+                        -- ztics
                         ]
                 }
 
@@ -241,6 +246,7 @@ view model =
                                 (String.fromFloat
                                     (Pixels.toFloat
                                         (Point2d.xCoordinate vertex)
+                                        - 60
                                     )
                                 )
                             , Svg.Attributes.y
@@ -250,7 +256,7 @@ view model =
                                     )
                                 )
                             ]
-                            [ Svg.text (String.fromFloat ml) ]
+                            [ Svg.text (stupidStrConvert (String.fromFloat ml) ml model) ]
                             |> Svg.mirrorAcross (Axis2d.through vertex Direction2d.x)
                     )
 
@@ -292,7 +298,7 @@ view model =
                             (div []
                                 (List.concat
                                     [ genLButtons
-                                        (List.range 0 10)
+                                        (List.range 0 9)
                                     ]
                                 )
                             )
@@ -317,6 +323,22 @@ view model =
         [ allElements
         ]
     }
+
+
+stupidStrConvert : String -> Float -> Model -> String
+stupidStrConvert str ml model =
+    if model.isTotalAngularMomentum then
+        if ml < 0 then
+            str
+
+        else
+            String.append "\u{2000}" str
+
+    else if ml < 0 then
+        str ++ ".0"
+
+    else
+        String.append (String.append "\u{2000}" str) ".0"
 
 
 htmlGenerator isDisplayMode stringLatex =
@@ -496,8 +518,97 @@ coords =
     List.map (Scene3d.lineSegment color) [ xcoord, ycoord, zcoord ]
 
 
+dashedLines l numSeg =
+    let
+        mls =
+            genList l
+    in
+    List.map (\ml -> dashedLine l ml numSeg) mls
+        |> List.concat
 
--- getCoord : Float -> Float -> (Point3d Meters WorldCoordinates)
+
+dashedLine l ml numSeg =
+    let
+        vecToPoint =
+            Vector3d.toMeters >> Point3d.fromMeters
+
+        pointToVec =
+            Vector3d.fromMeters << Point3d.toMeters
+
+        coord =
+            getCoord l ml
+
+        zProjection =
+            Point3d.projectOntoAxis Axis3d.z coord
+
+        color =
+            Material.color Color.black
+
+        vecCoord =
+            pointToVec coord
+
+        zCoord =
+            pointToVec zProjection
+
+        diff =
+            Vector3d.minus zCoord vecCoord
+
+        numSegB =
+            numSeg - 1
+
+        values =
+            -- [0,1,2,3,4,5,6,7,8,9]
+            -- 2,3,6,7,10,11 filtered
+            -- => [0,1,4,5,8,9]
+            -- List.map toFloat <| List.range 0 numSegB
+            List.map toFloat <| ownList 0 2 2 13
+
+        valuesT =
+            List.map
+                (\x ->
+                    ( vecToPoint
+                        (Vector3d.plus zCoord
+                            (Vector3d.scaleBy
+                                (x
+                                    / toFloat
+                                        numSeg
+                                )
+                                diff
+                            )
+                        )
+                    , vecToPoint
+                        (Vector3d.plus zCoord
+                            (Vector3d.scaleBy
+                                ((x + 1)
+                                    / toFloat
+                                        numSeg
+                                )
+                                diff
+                            )
+                        )
+                    )
+                )
+                values
+    in
+    List.map (Scene3d.lineSegment color) <|
+        List.map LineSegment3d.fromEndpoints valuesT
+
+
+
+-- Better start
+-- [(0, 0)] -> [(0, 0), (2,3)] -> ...
+
+
+ownList start onLen offLen howM =
+    if howM == 0 then
+        []
+
+    else
+        List.range start (start + onLen - 1)
+            ++ ownList (start + onLen + offLen)
+                onLen
+                offLen
+                (howM - 1)
 
 
 getCoord l ml =
@@ -564,12 +675,11 @@ genList l =
 
 
 genListHelp l lmax ls =
-    case l == lmax of
-        True ->
-            [ l ] ++ ls
+    if l == lmax then
+        [ l ] ++ ls
 
-        False ->
-            [ l ] ++ genListHelp (l + 1) lmax ls
+    else
+        [ l ] ++ genListHelp (l + 1) lmax ls
 
 
 arrows l =

@@ -10664,18 +10664,13 @@ var $ianmackenzie$elm_3d_scene$Scene3d$Material$color = function (givenColor) {
 };
 var $author$project$Main$genListHelp = F3(
 	function (l, lmax, ls) {
-		var _v0 = _Utils_eq(l, lmax);
-		if (_v0) {
-			return _Utils_ap(
-				_List_fromArray(
-					[l]),
-				ls);
-		} else {
-			return _Utils_ap(
-				_List_fromArray(
-					[l]),
-				A3($author$project$Main$genListHelp, l + 1, lmax, ls));
-		}
+		return _Utils_eq(l, lmax) ? _Utils_ap(
+			_List_fromArray(
+				[l]),
+			ls) : _Utils_ap(
+			_List_fromArray(
+				[l]),
+			A3($author$project$Main$genListHelp, l + 1, lmax, ls));
 	});
 var $author$project$Main$genList = function (l) {
 	return A3($author$project$Main$genListHelp, -l, l, _List_Nil);
@@ -16288,6 +16283,101 @@ var $author$project$Main$coords = function () {
 		_List_fromArray(
 			[xcoord, ycoord, zcoord]));
 }();
+var $ianmackenzie$elm_geometry$Point3d$fromMeters = function (givenCoordinates) {
+	return $ianmackenzie$elm_geometry$Geometry$Types$Point3d(givenCoordinates);
+};
+var $ianmackenzie$elm_geometry$Vector3d$fromMeters = function (givenComponents) {
+	return $ianmackenzie$elm_geometry$Geometry$Types$Vector3d(givenComponents);
+};
+var $ianmackenzie$elm_geometry$Vector3d$minus = F2(
+	function (_v0, _v1) {
+		var v2 = _v0.a;
+		var v1 = _v1.a;
+		return $ianmackenzie$elm_geometry$Geometry$Types$Vector3d(
+			{x: v1.x - v2.x, y: v1.y - v2.y, z: v1.z - v2.z});
+	});
+var $author$project$Main$ownList = F4(
+	function (start, onLen, offLen, howM) {
+		return (!howM) ? _List_Nil : _Utils_ap(
+			A2($elm$core$List$range, start, (start + onLen) - 1),
+			A4($author$project$Main$ownList, (start + onLen) + offLen, onLen, offLen, howM - 1));
+	});
+var $ianmackenzie$elm_geometry$Vector3d$plus = F2(
+	function (_v0, _v1) {
+		var v2 = _v0.a;
+		var v1 = _v1.a;
+		return $ianmackenzie$elm_geometry$Geometry$Types$Vector3d(
+			{x: v1.x + v2.x, y: v1.y + v2.y, z: v1.z + v2.z});
+	});
+var $ianmackenzie$elm_geometry$Point3d$projectOntoAxis = F2(
+	function (_v0, _v1) {
+		var axis = _v0.a;
+		var p = _v1.a;
+		var _v2 = axis.originPoint;
+		var p0 = _v2.a;
+		var _v3 = axis.direction;
+		var d = _v3.a;
+		var distance = (((p.x - p0.x) * d.x) + ((p.y - p0.y) * d.y)) + ((p.z - p0.z) * d.z);
+		return $ianmackenzie$elm_geometry$Geometry$Types$Point3d(
+			{x: p0.x + (distance * d.x), y: p0.y + (distance * d.y), z: p0.z + (distance * d.z)});
+	});
+var $ianmackenzie$elm_geometry$Vector3d$scaleBy = F2(
+	function (k, _v0) {
+		var v = _v0.a;
+		return $ianmackenzie$elm_geometry$Geometry$Types$Vector3d(
+			{x: k * v.x, y: k * v.y, z: k * v.z});
+	});
+var $ianmackenzie$elm_geometry$Vector3d$toMeters = function (_v0) {
+	var vectorComponents = _v0.a;
+	return vectorComponents;
+};
+var $author$project$Main$dashedLine = F3(
+	function (l, ml, numSeg) {
+		var vecToPoint = A2($elm$core$Basics$composeR, $ianmackenzie$elm_geometry$Vector3d$toMeters, $ianmackenzie$elm_geometry$Point3d$fromMeters);
+		var values = A2(
+			$elm$core$List$map,
+			$elm$core$Basics$toFloat,
+			A4($author$project$Main$ownList, 0, 2, 2, 13));
+		var pointToVec = A2($elm$core$Basics$composeL, $ianmackenzie$elm_geometry$Vector3d$fromMeters, $ianmackenzie$elm_geometry$Point3d$toMeters);
+		var numSegB = numSeg - 1;
+		var coord = A2($author$project$Main$getCoord, l, ml);
+		var vecCoord = pointToVec(coord);
+		var zProjection = A2($ianmackenzie$elm_geometry$Point3d$projectOntoAxis, $ianmackenzie$elm_geometry$Axis3d$z, coord);
+		var zCoord = pointToVec(zProjection);
+		var diff = A2($ianmackenzie$elm_geometry$Vector3d$minus, zCoord, vecCoord);
+		var valuesT = A2(
+			$elm$core$List$map,
+			function (x) {
+				return _Utils_Tuple2(
+					vecToPoint(
+						A2(
+							$ianmackenzie$elm_geometry$Vector3d$plus,
+							zCoord,
+							A2($ianmackenzie$elm_geometry$Vector3d$scaleBy, x / numSeg, diff))),
+					vecToPoint(
+						A2(
+							$ianmackenzie$elm_geometry$Vector3d$plus,
+							zCoord,
+							A2($ianmackenzie$elm_geometry$Vector3d$scaleBy, (x + 1) / numSeg, diff))));
+			},
+			values);
+		var color = $ianmackenzie$elm_3d_scene$Scene3d$Material$color($avh4$elm_color$Color$black);
+		return A2(
+			$elm$core$List$map,
+			$ianmackenzie$elm_3d_scene$Scene3d$lineSegment(color),
+			A2($elm$core$List$map, $ianmackenzie$elm_geometry$LineSegment3d$fromEndpoints, valuesT));
+	});
+var $author$project$Main$dashedLines = F2(
+	function (l, numSeg) {
+		var mls = $author$project$Main$genList(l);
+		return $elm$core$List$concat(
+			A2(
+				$elm$core$List$map,
+				function (ml) {
+					return A3($author$project$Main$dashedLine, l, ml, numSeg);
+				},
+				mls));
+	});
 var $mdgriffith$elm_ui$Element$el = F2(
 	function (attrs, child) {
 		return A4(
@@ -17126,18 +17216,6 @@ var $ianmackenzie$elm_geometry$Point2d$pixels = F2(
 		return $ianmackenzie$elm_geometry$Geometry$Types$Point2d(
 			{x: x, y: y});
 	});
-var $ianmackenzie$elm_geometry$Point3d$projectOntoAxis = F2(
-	function (_v0, _v1) {
-		var axis = _v0.a;
-		var p = _v1.a;
-		var _v2 = axis.originPoint;
-		var p0 = _v2.a;
-		var _v3 = axis.direction;
-		var d = _v3.a;
-		var distance = (((p.x - p0.x) * d.x) + ((p.y - p0.y) * d.y)) + ((p.z - p0.z) * d.z);
-		return $ianmackenzie$elm_geometry$Geometry$Types$Point3d(
-			{x: p0.x + (distance * d.x), y: p0.y + (distance * d.y), z: p0.z + (distance * d.z)});
-	});
 var $ianmackenzie$elm_geometry$Frame2d$copy = function (_v0) {
 	var properties = _v0.a;
 	return $ianmackenzie$elm_geometry$Geometry$Types$Frame2d(properties);
@@ -17319,6 +17397,14 @@ var $mdgriffith$elm_ui$Element$spacing = function (x) {
 			x));
 };
 var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
+var $elm$core$String$append = _String_append;
+var $author$project$Main$stupidStrConvert = F3(
+	function (str, ml, model) {
+		return model.isTotalAngularMomentum ? ((ml < 0) ? str : A2($elm$core$String$append, '\u2000', str)) : ((ml < 0) ? (str + '.0') : A2(
+			$elm$core$String$append,
+			A2($elm$core$String$append, '\u2000', str),
+			'.0'));
+	});
 var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
 var $elm$svg$Svg$text = $elm$virtual_dom$VirtualDom$text;
 var $elm$svg$Svg$text_ = $elm$svg$Svg$trustedNode('text');
@@ -18618,7 +18704,7 @@ var $author$project$Main$view = function (model) {
 							$elm$svg$Svg$Attributes$x(
 							$elm$core$String$fromFloat(
 								$ianmackenzie$elm_units$Pixels$toFloat(
-									$ianmackenzie$elm_geometry$Point2d$xCoordinate(vertex)))),
+									$ianmackenzie$elm_geometry$Point2d$xCoordinate(vertex)) - 60)),
 							$elm$svg$Svg$Attributes$y(
 							$elm$core$String$fromFloat(
 								$ianmackenzie$elm_units$Pixels$toFloat(
@@ -18627,7 +18713,11 @@ var $author$project$Main$view = function (model) {
 					_List_fromArray(
 						[
 							$elm$svg$Svg$text(
-							$elm$core$String$fromFloat(ml))
+							A3(
+								$author$project$Main$stupidStrConvert,
+								$elm$core$String$fromFloat(ml),
+								ml,
+								model))
 						])));
 		},
 		combinedList);
@@ -18662,7 +18752,8 @@ var $author$project$Main$view = function (model) {
 						A3($author$project$Main$ringU, angularMomentum, 50, $author$project$Main$X),
 						A3($author$project$Main$ringU, angularMomentum, 50, $author$project$Main$Y),
 						A3($author$project$Main$ringU, angularMomentum, 50, $author$project$Main$Z),
-						$author$project$Main$coords
+						$author$project$Main$coords,
+						A2($author$project$Main$dashedLines, angularMomentum, 50)
 					]))
 		});
 	var allElements = A2(
@@ -18733,7 +18824,7 @@ var $author$project$Main$view = function (model) {
 									_List_fromArray(
 										[
 											$author$project$Main$genLButtons(
-											A2($elm$core$List$range, 0, 10))
+											A2($elm$core$List$range, 0, 9))
 										]))))),
 						A2(
 						$mdgriffith$elm_ui$Element$el,
