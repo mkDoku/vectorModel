@@ -1,10 +1,7 @@
 module Main exposing (..)
 
-{-| This example is very similar to the HelloWorld example but shows how to
-render individual triangles.
--}
-
 import Angle exposing (Angle)
+import Axis2d
 import Axis3d
 import Browser
 import Browser.Events
@@ -12,37 +9,53 @@ import Camera3d
 import Color
 import Cone3d
 import Cylinder3d
+import Direction2d
 import Direction3d
-import Html exposing (Html, span, div, text, button, input, map, output, hr, h1, h2, h3)
-import Html.Attributes exposing (value, placeholder, type_, class, style)
+import Element
+import Element.Border
+import Element.Input as Input
+import Frame2d
+import Geometry.Svg as Svg
+import Html exposing (Html, button, div, h1, h2, h3, hr, input, map, output, span, text)
+import Html.Attributes exposing (class, placeholder, style, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as Decode exposing (Decoder)
-import Katex as K exposing ( Latex, human, inline, display, print)
+import Katex as K exposing (Latex, display, human, inline, print)
 import Length
 import LineSegment3d
 import Pixels exposing (Pixels)
+import Point2d
 import Point3d
+import Point3d.Projection
 import Quantity exposing (Quantity)
+import Rectangle2d
 import Scene3d
 import Scene3d.Material as Material
 import Scene3d.Mesh as Mesh exposing (Mesh)
+import Svg exposing (Svg)
+import Svg.Attributes
 import Triangle3d
 import TriangularMesh
 import Viewpoint3d
 
+
+
 --- type definitions ---
+
+
 type WorldCoordinates
     = WorldCoordinates
 
+
 type alias Model =
-  {
-    azimuth   : Angle
-  , elevation : Angle
-  , orbiting  : Bool
-  , angularMomentum : Int
-  , totalAngularMomentum : Float
-  , isTotalAngularMomentum : Bool
-  }
+    { azimuth : Angle
+    , elevation : Angle
+    , orbiting : Bool
+    , angularMomentum : Int
+    , totalAngularMomentum : Float
+    , isTotalAngularMomentum : Bool
+    }
+
 
 type Msg
     = MouseDown
@@ -52,29 +65,37 @@ type Msg
     | TotalAngular
     | ChangeL Int
 
+
 type Direction
-  = X | Y | Z
+    = X
+    | Y
+    | Z
+
 
 type AngularMomentum
-  = L | J
+    = L
+    | J
+
 
 
 --- main ---
+
+
 main : Program () Model Msg
 main =
-  Browser.document
-    { init = init
-    , update = update
-    , view = view
-    , subscriptions = subscriptions
-    }
+    Browser.document
+        { init = init
+        , update = update
+        , view = view
+        , subscriptions = subscriptions
+        }
+
 
 init : () -> ( Model, Cmd Msg )
 init () =
-    ( {
-        azimuth  = Angle.degrees 45
-      , elevation = Angle.degrees 30
-      , orbiting  = False
+    ( { azimuth = Angle.degrees 0 --  45
+      , elevation = Angle.degrees 0 --30
+      , orbiting = False
       , angularMomentum = 1
       , totalAngularMomentum = 1.5
       , isTotalAngularMomentum = False
@@ -82,22 +103,31 @@ init () =
     , Cmd.none
     )
 
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update message model =
     case message of
         ChangeL l ->
-          ( { model |   angularMomentum = l
-                      , totalAngularMomentum = ((toFloat l) + 0.5)
-            }
-          , Cmd.none )
-        TotalAngular ->
-          ( { model | isTotalAngularMomentum = not model.isTotalAngularMomentum },
-          Cmd.none )
-        Reset ->
-            ( { model |   azimuth = Angle.degrees 0
-                        , elevation = Angle.degrees 0
+            ( { model
+                | angularMomentum = l
+                , totalAngularMomentum = toFloat l + 0.5
               }
-              , Cmd.none )
+            , Cmd.none
+            )
+
+        TotalAngular ->
+            ( { model | isTotalAngularMomentum = not model.isTotalAngularMomentum }
+            , Cmd.none
+            )
+
+        Reset ->
+            ( { model
+                | azimuth = Angle.degrees 0
+                , elevation = Angle.degrees 0
+              }
+            , Cmd.none
+            )
+
         MouseDown ->
             ( { model | orbiting = True }, Cmd.none )
 
@@ -132,6 +162,7 @@ update message model =
                 ( { model | azimuth = newAzimuth, elevation = newElevation }
                 , Cmd.none
                 )
+
             else
                 ( model, Cmd.none )
 
@@ -143,9 +174,12 @@ view model =
         -- focal point, with azimuth measured from the positive X direction
         -- towards positive Y
         angularMomentum =
-          case model.isTotalAngularMomentum of
-            True -> (toFloat model.angularMomentum) + 0.5
-            False -> (toFloat model.angularMomentum)
+            if model.isTotalAngularMomentum then
+                toFloat model.angularMomentum + 0.5
+
+            else
+                toFloat model.angularMomentum
+
         viewpoint =
             Viewpoint3d.orbitZ
                 { focalPoint = Point3d.meters 0 0 0
@@ -159,45 +193,131 @@ view model =
                 { viewpoint = viewpoint
                 , verticalFieldOfView = Angle.degrees 30
                 }
+
+        mlValues =
+            genList angularMomentum
+
+        mlCoords =
+            mlValues
+                |> List.map (getCoord angularMomentum)
+                |> List.map (Point3d.projectOntoAxis Axis3d.z)
+
+        vertices =
+            --             [ Point3d.meters 0 0 -(sqrt 2) ]
+            mlCoords
+                -- |> List.map (Point3d.rotateAround Axis3d.z model.azimuth)
+                -- |> List.map (Point3d.rotateAround Axis3d.y model.elevation)
+                |> List.map (Point3d.Projection.toScreenSpace camera screenRectangle)
+
+        sceneElement =
+            Scene3d.unlit
+                { camera = camera
+                , clipDepth = Length.meters 0.1
+                , dimensions = ( Pixels.int 800, Pixels.int 600 )
+                , background = Scene3d.transparentBackground
+                , entities =
+                    List.concat
+                        [ arrows angularMomentum
+                        , ringU angularMomentum 50 X
+                        , ringU angularMomentum 50 Y
+                        , ringU angularMomentum 50 Z
+                        , coords
+                        ]
+                }
+
+        combinedList =
+            List.map2 Tuple.pair vertices mlValues
+
+        svgLabels =
+            combinedList
+                |> List.map
+                    (\( vertex, ml ) ->
+                        Svg.text_
+                            [ Svg.Attributes.fill "rgb(92, 92, 92)"
+                            , Svg.Attributes.fontFamily "monospace"
+                            , Svg.Attributes.fontSize "20px"
+                            , Svg.Attributes.stroke "none"
+                            , Svg.Attributes.x
+                                (String.fromFloat
+                                    (Pixels.toFloat
+                                        (Point2d.xCoordinate vertex)
+                                    )
+                                )
+                            , Svg.Attributes.y
+                                (String.fromFloat
+                                    (Pixels.toFloat
+                                        (Point2d.yCoordinate vertex)
+                                    )
+                                )
+                            ]
+                            [ Svg.text (String.fromFloat ml) ]
+                            |> Svg.mirrorAcross (Axis2d.through vertex Direction2d.x)
+                    )
+
+        svgElement =
+            Svg.svg
+                [ Svg.Attributes.width <| String.fromInt myWidth
+                , Svg.Attributes.height <| String.fromInt myHeight
+                ]
+                [ Svg.relativeTo topLeftFrame
+                    (Svg.g [] svgLabels)
+                ]
+
+        screenRectangle =
+            Rectangle2d.from Point2d.origin (Point2d.pixels myHeight myWidth)
+
+        allElements =
+            Element.layout [] <|
+                Element.column [ Element.spacing 12 ] <|
+                    [ -- Use Element.inFront to place the SVG element in front of the
+                      --WebGL element
+                      Element.el
+                        [ Element.inFront (Element.html svgElement) ]
+                        (Element.html <| sceneElement)
+                    , Element.el [] (Element.html (h1 [] [ text "Control" ]))
+                    , Element.el []
+                        (Element.html
+                            (div
+                                []
+                                (List.concat
+                                    [ [ text "Choose orbital angular momentum " ]
+                                    , [ K.generate htmlGenerator <| inline "l" ]
+                                    , [ text ": " ]
+                                    ]
+                                )
+                            )
+                        )
+                    , Element.el []
+                        (Element.html
+                            (div []
+                                (List.concat
+                                    [ genLButtons
+                                        (List.range 0 10)
+                                    ]
+                                )
+                            )
+                        )
+                    , Element.el [] (Element.html (h2 [] [ text "View" ]))
+                    , Element.el [] (Element.html (div [] [ text "Show total angular momentum: ", input [ type_ "checkbox", onClick TotalAngular ] [] ]))
+                    , Element.el []
+                        (Element.html
+                            (div []
+                                [ button [ onClick Reset ]
+                                    [ text "xz-Projection"
+                                    ]
+                                ]
+                            )
+                        )
+                    , Element.el [] (Element.html (h1 [] [ text "Results" ]))
+                    ]
+                        ++ (results model |> List.map Element.html)
     in
     { title = "Vector Model for Angular Momenta (Quantum Mechanics)"
     , body =
-        [
-      Scene3d.unlit
-            { camera = camera
-            , clipDepth = Length.meters 0.1
-            , dimensions = ( Pixels.int 800, Pixels.int 600 )
-            , background = Scene3d.transparentBackground
-            , entities = List.concat
-                          [ arrows angularMomentum
-                          , ringU angularMomentum 50 X
-                          , ringU angularMomentum 50 Y
-                          , ringU angularMomentum 50 Z
-                          , coords
-                          ]
-            }
-        , h1 [] [ text "Control" ]
-        , div []
-          (List.concat [
-            [ text "Choose orbital angular momentum " ]
-          , [ (K.generate htmlGenerator) <| inline "l" ]
-          , [ text ": " ]
-         -- , genLButtons (List.range 0 10)
-          ])
-        , div [] (List.concat [ genLButtons (List.range 0 10) ] )
-        , h2 [] [ text "View" ]
-        , div []
-        [
-          text "Show total angular momentum: "
-        , input [ type_ "checkbox", onClick TotalAngular ] []
+        [ allElements
         ]
-        , div []
-            [ button [ onClick Reset ] [ text "xz-Projection" ]
-            ]
-        , h1 [] [ text "Results" ]
-        ] ++ results model
-
     }
+
 
 htmlGenerator isDisplayMode stringLatex =
     case isDisplayMode of
@@ -207,42 +327,69 @@ htmlGenerator isDisplayMode stringLatex =
         _ ->
             span [] [ text stringLatex ]
 
+
 results model =
-  let
-        orbitalAnuglar = toFloat model.angularMomentum
-        headingL = "Orbital angular momentum"
-        charL = "l"
-        textL = "orbital angular momentum "
-        passL = (headingL, charL, textL)
+    let
+        orbitalAnuglar =
+            toFloat model.angularMomentum
 
-        totalAngular = model.totalAngularMomentum
-        headingJ = "Total angular momentum"
-        charJ = "j"
-        textJ = "total angular momentum "
-        passJ = (headingJ, charJ, textJ)
+        headingL =
+            "Orbital angular momentum"
 
-  in
-         showResult passL orbitalAnuglar
-      ++ showResult passJ totalAngular
+        charL =
+            "l"
 
-showResult (heading, char, content) angularMomentum =
-   let
-       length = sqrt ( angularMomentum * (angularMomentum + 1))
-       lengthText c = String.concat
-         [ "|\\vec{",c,"}| = \\sqrt{",c,"\\cdot(",c,"+ 1)} \\hbar" ]
-   in
-       [ h2 [] [ text heading ]
-        , [ human content
-          , inline char
-          , human " = "
-          , human (String.fromFloat angularMomentum)
-          ] |> List.map (K.generate htmlGenerator) |> div []
-        , [ inline (lengthText char)
-          , human " = "
-          , human (String.fromFloat length)
-          , inline "\\hbar"
-          ] |> List.map (K.generate htmlGenerator) |> div []
-        ]
+        textL =
+            "orbital angular momentum "
+
+        passL =
+            ( headingL, charL, textL )
+
+        totalAngular =
+            model.totalAngularMomentum
+
+        headingJ =
+            "Total angular momentum"
+
+        charJ =
+            "j"
+
+        textJ =
+            "total angular momentum "
+
+        passJ =
+            ( headingJ, charJ, textJ )
+    in
+    showResult passL orbitalAnuglar
+        ++ showResult passJ totalAngular
+
+
+showResult ( heading, char, content ) angularMomentum =
+    let
+        length =
+            sqrt (angularMomentum * (angularMomentum + 1))
+
+        lengthText c =
+            String.concat
+                [ "|\\vec{", c, "}| = \\sqrt{", c, "\\cdot(", c, "+ 1)} \\hbar" ]
+    in
+    [ h2 [] [ text heading ]
+    , [ human content
+      , inline char
+      , human " = "
+      , human (String.fromFloat angularMomentum)
+      ]
+        |> List.map (K.generate htmlGenerator)
+        |> div []
+    , [ inline (lengthText char)
+      , human " = "
+      , human (String.fromFloat length)
+      , inline "\\hbar"
+      ]
+        |> List.map (K.generate htmlGenerator)
+        |> div []
+    ]
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -261,102 +408,185 @@ subscriptions model =
         -- to start orbiting
         Browser.Events.onMouseDown (Decode.succeed MouseDown)
 
+
+
 ---- Helper functions -------
 
+
+myHeight =
+    800
+
+
+myWidth =
+    600
+
+
+topLeftFrame =
+    Frame2d.atPoint (Point2d.xy Quantity.zero (Pixels.float 600))
+        -- Frame2d.atPoint (Point2d.xy Quantity.zero (Pixels.float 600))
+        |> Frame2d.reverseY
+
+
 toCartesianU r phi direc =
-  let
-      x = r * (cos phi)
-      y = r * (sin phi)
-  in
-      case direc of
-        X -> Point3d.meters x y 0
-        Y -> Point3d.meters 0 x y
-        Z -> Point3d.meters x 0 y
+    let
+        x =
+            r * cos phi
+
+        y =
+            r * sin phi
+    in
+    case direc of
+        X ->
+            Point3d.meters x y 0
+
+        Y ->
+            Point3d.meters 0 x y
+
+        Z ->
+            Point3d.meters x 0 y
+
 
 ringU l numSeg direc =
-  let
-      len = sqrt ( l * ( l + 1 ) )
-      step = 2 * pi / (toFloat numSeg)
-      color = Material.color Color.blue
+    let
+        len =
+            sqrt (l * (l + 1))
 
-      values = List.map toFloat <| List.range 0 numSeg
-      valuesT = List.map (\x -> (toCartesianU len (x*step) direc
-                               , toCartesianU len ((x+1)*step) direc )) values
-  in
-      List.map (Scene3d.lineSegment color)
-        <| List.map (LineSegment3d.fromEndpoints) valuesT
+        step =
+            2 * pi / toFloat numSeg
+
+        color =
+            Material.color Color.blue
+
+        values =
+            List.map toFloat <| List.range 0 numSeg
+
+        valuesT =
+            List.map
+                (\x ->
+                    ( toCartesianU len (x * step) direc
+                    , toCartesianU len ((x + 1) * step) direc
+                    )
+                )
+                values
+    in
+    List.map (Scene3d.lineSegment color) <|
+        List.map LineSegment3d.fromEndpoints valuesT
+
 
 coords =
-  let
-      len1 = Length.meters (-15)
-      len2 = Length.meters 15
+    let
+        len1 =
+            Length.meters -50
 
-      xcoord = LineSegment3d.along Axis3d.x len1 len2
-      ycoord = LineSegment3d.along Axis3d.y len1 len2
-      zcoord = LineSegment3d.along Axis3d.z len1 len2
+        len2 =
+            Length.meters 50
 
-      color = Material.color Color.black
-  in
-      List.map (Scene3d.lineSegment color) [xcoord, ycoord, zcoord]
+        xcoord =
+            LineSegment3d.along Axis3d.x len1 len2
+
+        ycoord =
+            LineSegment3d.along Axis3d.y len1 len2
+
+        zcoord =
+            LineSegment3d.along Axis3d.z len1 len2
+
+        color =
+            Material.color Color.black
+    in
+    List.map (Scene3d.lineSegment color) [ xcoord, ycoord, zcoord ]
 
 
 
 -- getCoord : Float -> Float -> (Point3d Meters WorldCoordinates)
+
+
 getCoord l ml =
-  let
-      len = sqrt ( l * ( l + 1 ) )
-      phi = asin ( ml / len )
-      y = len * (cos phi)
-      z = len * (sin phi)
-  in
-      Point3d.meters 0 y z
+    let
+        len =
+            sqrt (l * (l + 1))
+
+        phi =
+            asin (ml / len)
+
+        y =
+            len * cos phi
+
+        z =
+            len * sin phi
+    in
+    Point3d.meters 0 y z
+
 
 arrowHead l ml len dir color =
     let
-       tmp = Cone3d.along dir
-              { base   = Length.meters (0.9 * len)
-              , tip    = Length.meters len
-              , radius = Length.meters 0.05
-              }
-    in Scene3d.cone color tmp
+        tmp =
+            Cone3d.along dir
+                { base = Length.meters (0.9 * len)
+                , tip = Length.meters len
+                , radius = Length.meters 0.05
+                }
+    in
+    Scene3d.cone color tmp
 
 
 arrowBody l ml len dir color =
-  let
-       tmp = Cylinder3d.along dir
-              { start  = Length.meters 0.0
-              , end    = Length.meters (0.9 * len)
-              , radius = Length.meters 0.02
-              }
-    in Scene3d.cylinder color tmp
+    let
+        tmp =
+            Cylinder3d.along dir
+                { start = Length.meters 0.0
+                , end = Length.meters (0.9 * len)
+                , radius = Length.meters 0.02
+                }
+    in
+    Scene3d.cylinder color tmp
+
 
 arrow l ml len color =
     let
-        origin = Point3d.meters 0 0 0
+        origin =
+            Point3d.meters 0 0 0
+
         dir =
-         case Axis3d.throughPoints origin (getCoord l ml) of
-           Just ret -> ret
-           Nothing -> Axis3d.z
-    in [ (arrowHead l ml len dir color)
-       , (arrowBody l ml len dir color)
-       ]
+            case Axis3d.throughPoints origin (getCoord l ml) of
+                Just ret ->
+                    ret
+
+                Nothing ->
+                    Axis3d.z
+    in
+    [ arrowHead l ml len dir color
+    , arrowBody l ml len dir color
+    ]
 
 
-genList l = genListHelp (-l) l []
+genList l =
+    genListHelp -l l []
+
 
 genListHelp l lmax ls =
-  case (l == lmax) of
-    True -> [l] ++ ls
-    False -> [l] ++ (genListHelp (l+1) lmax ls)
+    case l == lmax of
+        True ->
+            [ l ] ++ ls
+
+        False ->
+            [ l ] ++ genListHelp (l + 1) lmax ls
+
 
 arrows l =
-  let
-      len = sqrt ( l * ( l + 1 ) )
-      color = Material.color Color.blue
-      tmp = genList l
-  in
-      List.concat
-        <| List.map (\ml -> arrow l ml len color) tmp
+    let
+        len =
+            sqrt (l * (l + 1))
+
+        color =
+            Material.color Color.blue
+
+        tmp =
+            genList l
+    in
+    List.concat <|
+        List.map (\ml -> arrow l ml len color) tmp
+
+
 {-| Use movementX and movementY for simplicity (don't need to store initial
 mouse position in the model) - not supported in Internet Explorer though
 -}
@@ -366,8 +596,18 @@ decodeMouseMove =
         (Decode.field "movementX" (Decode.map Pixels.float Decode.float))
         (Decode.field "movementY" (Decode.map Pixels.float Decode.float))
 
+
+
 -- genLButtons : [Int] -> [Html msg]
-genLButtons ls = List.map (genLButton) ls
+
+
+genLButtons ls =
+    List.map genLButton ls
+
+
 
 -- genLButton : Int -> Html msg
-genLButton l = button [ onClick (ChangeL l)] [ text (String.fromInt l)]
+
+
+genLButton l =
+    button [ onClick (ChangeL l) ] [ text (String.fromInt l) ]
