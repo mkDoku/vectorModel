@@ -17276,11 +17276,37 @@ var $yotamDvir$elm_katex$Katex$Configs$Human = function (a) {
 };
 var $yotamDvir$elm_katex$Katex$Configs$human = $yotamDvir$elm_katex$Katex$Configs$Human;
 var $yotamDvir$elm_katex$Katex$human = A2($elm$core$Basics$composeL, $yotamDvir$elm_katex$Katex$Configs$human, $elm$core$Basics$always);
+var $elm$core$List$intersperse = F2(
+	function (sep, xs) {
+		if (!xs.b) {
+			return _List_Nil;
+		} else {
+			var hd = xs.a;
+			var tl = xs.b;
+			var step = F2(
+				function (x, rest) {
+					return A2(
+						$elm$core$List$cons,
+						sep,
+						A2($elm$core$List$cons, x, rest));
+				});
+			var spersed = A3($elm$core$List$foldr, step, _List_Nil, tl);
+			return A2($elm$core$List$cons, hd, spersed);
+		}
+	});
+var $author$project$Main$showMls = function (values) {
+	var valuesStr = A2($elm$core$List$map, $elm$core$String$fromFloat, values);
+	return '[' + (A2(
+		$elm$core$Basics$composeL,
+		$elm$core$String$concat,
+		$elm$core$List$intersperse(','))(valuesStr) + ']');
+};
 var $author$project$Main$showResult = F2(
 	function (_v0, angularMomentum) {
 		var heading = _v0.a;
 		var _char = _v0.b;
 		var content = _v0.c;
+		var mlList = $author$project$Main$genList(angularMomentum);
 		var lengthText = function (c) {
 			return $elm$core$String$concat(
 				_List_fromArray(
@@ -17304,11 +17330,15 @@ var $author$project$Main$showResult = F2(
 					$yotamDvir$elm_katex$Katex$generate($author$project$Main$htmlGenerator),
 					_List_fromArray(
 						[
-							$yotamDvir$elm_katex$Katex$human(content),
 							$yotamDvir$elm_katex$Katex$inline(_char),
 							$yotamDvir$elm_katex$Katex$human(' = '),
 							$yotamDvir$elm_katex$Katex$human(
-							$elm$core$String$fromFloat(angularMomentum))
+							$elm$core$String$fromFloat(angularMomentum)),
+							$yotamDvir$elm_katex$Katex$human(', '),
+							$yotamDvir$elm_katex$Katex$inline('m_{' + (_char + '}')),
+							$yotamDvir$elm_katex$Katex$human(' = '),
+							$yotamDvir$elm_katex$Katex$human(
+							$author$project$Main$showMls(mlList))
 						]))),
 				A2(
 				$elm$html$Html$div,
@@ -18831,22 +18861,11 @@ var $author$project$Main$view = function (model) {
 						_List_Nil,
 						$mdgriffith$elm_ui$Element$html(
 							A2(
-								$elm$html$Html$h2,
-								_List_Nil,
-								_List_fromArray(
-									[
-										$elm$html$Html$text('View')
-									])))),
-						A2(
-						$mdgriffith$elm_ui$Element$el,
-						_List_Nil,
-						$mdgriffith$elm_ui$Element$html(
-							A2(
 								$elm$html$Html$div,
 								_List_Nil,
 								_List_fromArray(
 									[
-										$elm$html$Html$text('Show total angular momentum: '),
+										$elm$html$Html$text('Use total angular momentum: '),
 										A2(
 										$elm$html$Html$input,
 										_List_fromArray(
@@ -18855,6 +18874,17 @@ var $author$project$Main$view = function (model) {
 												$elm$html$Html$Events$onClick($author$project$Main$TotalAngular)
 											]),
 										_List_Nil)
+									])))),
+						A2(
+						$mdgriffith$elm_ui$Element$el,
+						_List_Nil,
+						$mdgriffith$elm_ui$Element$html(
+							A2(
+								$elm$html$Html$h2,
+								_List_Nil,
+								_List_fromArray(
+									[
+										$elm$html$Html$text('View')
 									])))),
 						A2(
 						$mdgriffith$elm_ui$Element$el,

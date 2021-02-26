@@ -10,17 +10,14 @@ import Color
 import Cone3d
 import Cylinder3d
 import Direction2d
-import Direction3d
 import Element
-import Element.Border
-import Element.Input as Input
 import Frame2d
 import Geometry.Svg as Svg
-import Html exposing (Html, button, div, h1, h2, h3, hr, input, map, output, span, text)
-import Html.Attributes exposing (class, placeholder, style, type_, value)
-import Html.Events exposing (onClick, onInput)
+import Html exposing (button, div, h1, h2, input, span, text)
+import Html.Attributes exposing (type_)
+import Html.Events exposing (onClick)
 import Json.Decode as Decode exposing (Decoder)
-import Katex as K exposing (Latex, display, human, inline, print)
+import Katex as K exposing (human, inline)
 import Length
 import LineSegment3d
 import Pixels exposing (Pixels)
@@ -31,11 +28,8 @@ import Quantity exposing (Quantity)
 import Rectangle2d
 import Scene3d
 import Scene3d.Material as Material
-import Scene3d.Mesh as Mesh exposing (Mesh)
 import Svg exposing (Svg)
 import Svg.Attributes
-import Triangle3d
-import TriangularMesh
 import Vector3d
 import Viewpoint3d
 
@@ -224,9 +218,6 @@ view model =
                         , ringU angularMomentum 50 Z
                         , coords
                         , dashedLines angularMomentum 50
-
-                        -- dashes
-                        -- ztics
                         ]
                 }
 
@@ -303,8 +294,8 @@ view model =
                                 )
                             )
                         )
+                    , Element.el [] (Element.html (div [] [ text "Use total angular momentum: ", input [ type_ "checkbox", onClick TotalAngular ] [] ]))
                     , Element.el [] (Element.html (h2 [] [ text "View" ]))
-                    , Element.el [] (Element.html (div [] [ text "Show total angular momentum: ", input [ type_ "checkbox", onClick TotalAngular ] [] ]))
                     , Element.el []
                         (Element.html
                             (div []
@@ -386,6 +377,14 @@ results model =
         ++ showResult passJ totalAngular
 
 
+showMls values =
+    let
+        valuesStr =
+            List.map String.fromFloat values
+    in
+    "[" ++ (String.concat << List.intersperse ",") valuesStr ++ "]"
+
+
 showResult ( heading, char, content ) angularMomentum =
     let
         length =
@@ -394,12 +393,19 @@ showResult ( heading, char, content ) angularMomentum =
         lengthText c =
             String.concat
                 [ "|\\vec{", c, "}| = \\sqrt{", c, "\\cdot(", c, "+ 1)} \\hbar" ]
+
+        mlList =
+            genList angularMomentum
     in
     [ h2 [] [ text heading ]
-    , [ human content
-      , inline char
+    , [ -- human content
+        inline char
       , human " = "
       , human (String.fromFloat angularMomentum)
+      , human ", "
+      , inline <| "m_{" ++ char ++ "}"
+      , human " = "
+      , human <| showMls mlList
       ]
         |> List.map (K.generate htmlGenerator)
         |> div []
