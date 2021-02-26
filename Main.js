@@ -7051,8 +7051,8 @@ var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2(
 		{
 			angularMomentum: 1,
-			azimuth: $ianmackenzie$elm_units$Angle$degrees(0),
-			elevation: $ianmackenzie$elm_units$Angle$degrees(0),
+			azimuth: $ianmackenzie$elm_units$Angle$degrees(45),
+			elevation: $ianmackenzie$elm_units$Angle$degrees(30),
 			isTotalAngularMomentum: false,
 			orbiting: false,
 			totalAngularMomentum: 1.5

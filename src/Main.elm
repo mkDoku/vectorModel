@@ -88,8 +88,8 @@ main =
 
 init : () -> ( Model, Cmd Msg )
 init () =
-    ( { azimuth = Angle.degrees 0 --  45
-      , elevation = Angle.degrees 0 --30
+    ( { azimuth = Angle.degrees 45
+      , elevation = Angle.degrees 30
       , orbiting = False
       , angularMomentum = 1
       , totalAngularMomentum = 1.5
