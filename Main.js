@@ -7521,6 +7521,21 @@ var $author$project$Main$subscriptions = function (model) {
 				})
 			]));
 };
+var $ianmackenzie$elm_units$Length$inMeters = function (_v0) {
+	var numMeters = _v0.a;
+	return numMeters;
+};
+var $elm$core$Basics$not = _Basics_not;
+var $author$project$Main$zoomStep = 0.02;
+var $author$project$Main$updateDistanceBy = F2(
+	function (flt, model) {
+		return _Utils_update(
+			model,
+			{
+				distance: $ianmackenzie$elm_units$Length$meters(
+					$ianmackenzie$elm_units$Length$inMeters(model.distance) + (flt * $author$project$Main$zoomStep))
+			});
+	});
 var $ianmackenzie$elm_units$Quantity$at = F2(
 	function (_v0, _v1) {
 		var rate = _v0.a;
@@ -7540,10 +7555,6 @@ var $ianmackenzie$elm_units$Quantity$clamp = F3(
 			A3($elm$core$Basics$clamp, lower, upper, value)) : $ianmackenzie$elm_units$Quantity$Quantity(
 			A3($elm$core$Basics$clamp, upper, lower, value));
 	});
-var $ianmackenzie$elm_units$Length$inMeters = function (_v0) {
-	var numMeters = _v0.a;
-	return numMeters;
-};
 var $ianmackenzie$elm_units$Quantity$minus = F2(
 	function (_v0, _v1) {
 		var y = _v0.a;
@@ -7553,7 +7564,6 @@ var $ianmackenzie$elm_units$Quantity$minus = F2(
 var $elm$core$Basics$negate = function (n) {
 	return -n;
 };
-var $elm$core$Basics$not = _Basics_not;
 var $ianmackenzie$elm_units$Quantity$per = F2(
 	function (_v0, _v1) {
 		var independentValue = _v0.a;
@@ -7570,20 +7580,67 @@ var $ianmackenzie$elm_units$Quantity$plus = F2(
 		var x = _v1.a;
 		return $ianmackenzie$elm_units$Quantity$Quantity(x + y);
 	});
+var $author$project$Main$updateViewBy = F3(
+	function (dx, dy, model) {
+		var rotationRate = A2(
+			$ianmackenzie$elm_units$Quantity$per,
+			$ianmackenzie$elm_units$Pixels$pixel,
+			$ianmackenzie$elm_units$Angle$degrees(1));
+		var newElevation = A3(
+			$ianmackenzie$elm_units$Quantity$clamp,
+			$ianmackenzie$elm_units$Angle$degrees(-90),
+			$ianmackenzie$elm_units$Angle$degrees(90),
+			A2(
+				$ianmackenzie$elm_units$Quantity$plus,
+				A2($ianmackenzie$elm_units$Quantity$at, rotationRate, dy),
+				model.elevation));
+		var newAzimuth = A2(
+			$ianmackenzie$elm_units$Quantity$minus,
+			A2($ianmackenzie$elm_units$Quantity$at, rotationRate, dx),
+			model.azimuth);
+		return _Utils_update(
+			model,
+			{azimuth: newAzimuth, elevation: newElevation});
+	});
 var $author$project$Main$update = F2(
 	function (message, model) {
 		switch (message.$) {
+			case 'Zoom':
+				var dir = message.a;
+				if (dir.$ === 'In') {
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								distance: $ianmackenzie$elm_units$Length$meters(
+									$ianmackenzie$elm_units$Length$inMeters(model.distance) - 3)
+							}),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								distance: $ianmackenzie$elm_units$Length$meters(
+									$ianmackenzie$elm_units$Length$inMeters(model.distance) + 3)
+							}),
+						$elm$core$Platform$Cmd$none);
+				}
+			case 'Reset':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							azimuth: $ianmackenzie$elm_units$Angle$degrees(45),
+							elevation: $ianmackenzie$elm_units$Angle$degrees(30)
+						}),
+					$elm$core$Platform$Cmd$none);
 			case 'NoOp':
 				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 			case 'Scrolling':
 				var flt = message.a;
-				return (($ianmackenzie$elm_units$Length$inMeters(model.distance) + (flt * 0.05)) > 2) ? _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							distance: $ianmackenzie$elm_units$Length$meters(
-								$ianmackenzie$elm_units$Length$inMeters(model.distance) + (flt * 0.05))
-						}),
+				return (($ianmackenzie$elm_units$Length$inMeters(model.distance) + (flt * $author$project$Main$zoomStep)) > 2) ? _Utils_Tuple2(
+					A2($author$project$Main$updateDistanceBy, flt, model),
 					$elm$core$Platform$Cmd$none) : _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 			case 'ChangeL':
 				var l = message.a;
@@ -7598,7 +7655,7 @@ var $author$project$Main$update = F2(
 						model,
 						{isTotalAngularMomentum: !model.isTotalAngularMomentum}),
 					$elm$core$Platform$Cmd$none);
-			case 'Reset':
+			case 'Projection':
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
@@ -7622,38 +7679,22 @@ var $author$project$Main$update = F2(
 			default:
 				var dx = message.a;
 				var dy = message.b;
-				if (model.orbiting) {
-					var rotationRate = A2(
-						$ianmackenzie$elm_units$Quantity$per,
-						$ianmackenzie$elm_units$Pixels$pixel,
-						$ianmackenzie$elm_units$Angle$degrees(1));
-					var newElevation = A3(
-						$ianmackenzie$elm_units$Quantity$clamp,
-						$ianmackenzie$elm_units$Angle$degrees(-90),
-						$ianmackenzie$elm_units$Angle$degrees(90),
-						A2(
-							$ianmackenzie$elm_units$Quantity$plus,
-							A2($ianmackenzie$elm_units$Quantity$at, rotationRate, dy),
-							model.elevation));
-					var newAzimuth = A2(
-						$ianmackenzie$elm_units$Quantity$minus,
-						A2($ianmackenzie$elm_units$Quantity$at, rotationRate, dx),
-						model.azimuth);
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{azimuth: newAzimuth, elevation: newElevation}),
-						$elm$core$Platform$Cmd$none);
-				} else {
-					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-				}
+				return model.orbiting ? _Utils_Tuple2(
+					A3($author$project$Main$updateViewBy, dx, dy, model),
+					$elm$core$Platform$Cmd$none) : _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 		}
 	});
+var $author$project$Main$In = {$: 'In'};
+var $author$project$Main$Out = {$: 'Out'};
+var $author$project$Main$Projection = {$: 'Projection'};
 var $author$project$Main$Reset = {$: 'Reset'};
 var $author$project$Main$TotalAngular = {$: 'TotalAngular'};
 var $author$project$Main$X = {$: 'X'};
 var $author$project$Main$Y = {$: 'Y'};
 var $author$project$Main$Z = {$: 'Z'};
+var $author$project$Main$Zoom = function (a) {
+	return {$: 'Zoom', a: a};
+};
 var $ianmackenzie$elm_geometry$Geometry$Types$Cylinder3d = function (a) {
 	return {$: 'Cylinder3d', a: a};
 };
@@ -17002,7 +17043,7 @@ var $ianmackenzie$elm_geometry_svg$Geometry$Svg$mirrorAcross = function (axis) {
 	return $ianmackenzie$elm_geometry_svg$Geometry$Svg$placeIn(
 		A2($ianmackenzie$elm_geometry$Frame2d$mirrorAcross, axis, $ianmackenzie$elm_geometry$Frame2d$atOrigin));
 };
-var $author$project$Main$myHeight = 800;
+var $author$project$Main$myHeight = 600;
 var $author$project$Main$myWidth = 600;
 var $ianmackenzie$elm_3d_camera$Camera3d$Types$Viewpoint3d = function (a) {
 	return {$: 'Viewpoint3d', a: a};
@@ -17607,7 +17648,7 @@ var $author$project$Main$topLeftFrame = $ianmackenzie$elm_geometry$Frame2d$rever
 		A2(
 			$ianmackenzie$elm_geometry$Point2d$xy,
 			$ianmackenzie$elm_units$Quantity$zero,
-			$ianmackenzie$elm_units$Pixels$float(600))));
+			$ianmackenzie$elm_units$Pixels$float($author$project$Main$myWidth))));
 var $ianmackenzie$elm_3d_scene$Scene3d$BackgroundColor = function (a) {
 	return {$: 'BackgroundColor', a: a};
 };
@@ -18731,6 +18772,16 @@ var $author$project$Main$view = function (model) {
 		$ianmackenzie$elm_geometry$Rectangle2d$from,
 		$ianmackenzie$elm_geometry$Point2d$origin,
 		A2($ianmackenzie$elm_geometry$Point2d$pixels, $author$project$Main$myHeight, $author$project$Main$myWidth));
+	var mkHtmlElement = function (x) {
+		return A2(
+			$mdgriffith$elm_ui$Element$el,
+			_List_Nil,
+			$mdgriffith$elm_ui$Element$html(x));
+	};
+	var mkHtmlElementDiv = function (x) {
+		return mkHtmlElement(
+			A2($elm$html$Html$div, _List_Nil, x));
+	};
 	var camera = $ianmackenzie$elm_3d_camera$Camera3d$perspective(
 		{
 			verticalFieldOfView: $ianmackenzie$elm_units$Angle$degrees(30),
@@ -18808,8 +18859,8 @@ var $author$project$Main$view = function (model) {
 			camera: camera,
 			clipDepth: $ianmackenzie$elm_units$Length$meters(0.1),
 			dimensions: _Utils_Tuple2(
-				$ianmackenzie$elm_units$Pixels$int(800),
-				$ianmackenzie$elm_units$Pixels$int(600)),
+				$ianmackenzie$elm_units$Pixels$int($author$project$Main$myHeight),
+				$ianmackenzie$elm_units$Pixels$int($author$project$Main$myWidth)),
 			entities: $elm$core$List$concat(
 				_List_fromArray(
 					[
@@ -18821,6 +18872,14 @@ var $author$project$Main$view = function (model) {
 						A2($author$project$Main$dashedLines, angularMomentum, 50)
 					]))
 		});
+	var scenePlusSvg = A2(
+		$mdgriffith$elm_ui$Element$el,
+		_List_fromArray(
+			[
+				$mdgriffith$elm_ui$Element$inFront(
+				$mdgriffith$elm_ui$Element$html(svgElement))
+			]),
+		$mdgriffith$elm_ui$Element$html(sceneElement));
 	var allElements = A2(
 		$mdgriffith$elm_ui$Element$layout,
 		_List_Nil,
@@ -18833,103 +18892,84 @@ var $author$project$Main$view = function (model) {
 			_Utils_ap(
 				_List_fromArray(
 					[
+						scenePlusSvg,
+						mkHtmlElement(
 						A2(
-						$mdgriffith$elm_ui$Element$el,
+							$elm$html$Html$h1,
+							_List_Nil,
+							_List_fromArray(
+								[
+									$elm$html$Html$text('Control')
+								])))
+					]),
+				_Utils_ap(
+					A2(
+						$elm$core$List$map,
+						mkHtmlElementDiv,
 						_List_fromArray(
 							[
-								$mdgriffith$elm_ui$Element$inFront(
-								$mdgriffith$elm_ui$Element$html(svgElement))
-							]),
-						$mdgriffith$elm_ui$Element$html(sceneElement)),
-						A2(
-						$mdgriffith$elm_ui$Element$el,
-						_List_Nil,
-						$mdgriffith$elm_ui$Element$html(
-							A2(
-								$elm$html$Html$h1,
-								_List_Nil,
+								_List_fromArray(
+								[
+									$elm$html$Html$text('Choose orbital angular momentum '),
+									A2(
+									$yotamDvir$elm_katex$Katex$generate,
+									$author$project$Main$htmlGenerator,
+									$yotamDvir$elm_katex$Katex$inline('l')),
+									$elm$html$Html$text(': ')
+								]),
+								$elm$core$List$concat(
 								_List_fromArray(
 									[
-										$elm$html$Html$text('Control')
-									])))),
-						A2(
-						$mdgriffith$elm_ui$Element$el,
-						_List_Nil,
-						$mdgriffith$elm_ui$Element$html(
-							A2(
-								$elm$html$Html$div,
-								_List_Nil,
-								$elm$core$List$concat(
+										$author$project$Main$genLButtons(
+										A2($elm$core$List$range, 0, 9))
+									])),
+								_List_fromArray(
+								[
+									$elm$html$Html$text('Show '),
+									A2(
+									$yotamDvir$elm_katex$Katex$generate,
+									$author$project$Main$htmlGenerator,
+									$yotamDvir$elm_katex$Katex$inline('\\vec{j}')),
+									$elm$html$Html$text(' instead of '),
+									A2(
+									$yotamDvir$elm_katex$Katex$generate,
+									$author$project$Main$htmlGenerator,
+									$yotamDvir$elm_katex$Katex$inline('\\vec{l}')),
+									$elm$html$Html$text(': '),
+									A2(
+									$elm$html$Html$input,
 									_List_fromArray(
 										[
-											_List_fromArray(
-											[
-												$elm$html$Html$text('Choose orbital angular momentum ')
-											]),
-											_List_fromArray(
-											[
-												A2(
-												$yotamDvir$elm_katex$Katex$generate,
-												$author$project$Main$htmlGenerator,
-												$yotamDvir$elm_katex$Katex$inline('l'))
-											]),
-											_List_fromArray(
-											[
-												$elm$html$Html$text(': ')
-											])
-										]))))),
-						A2(
-						$mdgriffith$elm_ui$Element$el,
-						_List_Nil,
-						$mdgriffith$elm_ui$Element$html(
-							A2(
-								$elm$html$Html$div,
-								_List_Nil,
-								$elm$core$List$concat(
+											$elm$html$Html$Attributes$type_('checkbox'),
+											$elm$html$Html$Events$onClick($author$project$Main$TotalAngular)
+										]),
+									_List_Nil)
+								])
+							])),
+					_Utils_ap(
+						_List_fromArray(
+							[
+								mkHtmlElement(
+								A2(
+									$elm$html$Html$h2,
+									_List_Nil,
 									_List_fromArray(
 										[
-											$author$project$Main$genLButtons(
-											A2($elm$core$List$range, 0, 9))
-										]))))),
-						A2(
-						$mdgriffith$elm_ui$Element$el,
-						_List_Nil,
-						$mdgriffith$elm_ui$Element$html(
-							A2(
-								$elm$html$Html$div,
-								_List_Nil,
+											$elm$html$Html$text('View')
+										]))),
+								mkHtmlElementDiv(
 								_List_fromArray(
 									[
-										$elm$html$Html$text('Use total angular momentum: '),
 										A2(
-										$elm$html$Html$input,
+										$elm$html$Html$button,
 										_List_fromArray(
 											[
-												$elm$html$Html$Attributes$type_('checkbox'),
-												$elm$html$Html$Events$onClick($author$project$Main$TotalAngular)
+												$elm$html$Html$Events$onClick($author$project$Main$Projection)
 											]),
-										_List_Nil)
-									])))),
-						A2(
-						$mdgriffith$elm_ui$Element$el,
-						_List_Nil,
-						$mdgriffith$elm_ui$Element$html(
-							A2(
-								$elm$html$Html$h2,
-								_List_Nil,
-								_List_fromArray(
-									[
-										$elm$html$Html$text('View')
-									])))),
-						A2(
-						$mdgriffith$elm_ui$Element$el,
-						_List_Nil,
-						$mdgriffith$elm_ui$Element$html(
-							A2(
-								$elm$html$Html$div,
-								_List_Nil,
-								_List_fromArray(
-									[
+										_List_fromArray(
+											[
+												$elm$html$Html$text('xz-Projection')
+											])),
 										A2(
 										$elm$html$Html$button,
 										_List_fromArray(
@@ -18938,25 +18978,45 @@ var $author$project$Main$view = function (model) {
 											]),
 										_List_fromArray(
 											[
-												$elm$html$Html$text('xz-Projection')
+												$elm$html$Html$text('Reset')
+											])),
+										$elm$html$Html$text('Zoom: '),
+										A2(
+										$elm$html$Html$button,
+										_List_fromArray(
+											[
+												$elm$html$Html$Events$onClick(
+												$author$project$Main$Zoom($author$project$Main$In))
+											]),
+										_List_fromArray(
+											[
+												$elm$html$Html$text('+')
+											])),
+										A2(
+										$elm$html$Html$button,
+										_List_fromArray(
+											[
+												$elm$html$Html$Events$onClick(
+												$author$project$Main$Zoom($author$project$Main$Out))
+											]),
+										_List_fromArray(
+											[
+												$elm$html$Html$text('-')
 											]))
-									])))),
+									])),
+								mkHtmlElement(
+								A2(
+									$elm$html$Html$h1,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$elm$html$Html$text('Results')
+										])))
+							]),
 						A2(
-						$mdgriffith$elm_ui$Element$el,
-						_List_Nil,
-						$mdgriffith$elm_ui$Element$html(
-							A2(
-								$elm$html$Html$h1,
-								_List_Nil,
-								_List_fromArray(
-									[
-										$elm$html$Html$text('Results')
-									]))))
-					]),
-				A2(
-					$elm$core$List$map,
-					$mdgriffith$elm_ui$Element$html,
-					$author$project$Main$results(model)))));
+							$elm$core$List$map,
+							$mdgriffith$elm_ui$Element$html,
+							$author$project$Main$results(model)))))));
 	return {
 		body: _List_fromArray(
 			[allElements]),

@@ -35,11 +35,15 @@ import Vector3d
 import Viewpoint3d
 
 
+{-| Taken from this:
+<https://discourse.elm-lang.org/t/elm-scroll-an-effect-manager-for-scroll-events/1032>
+For the use see: <https://ellie-app.com/qqp6pVJRQa1/0>
+-}
 port onWheel : (Value -> msg) -> Sub msg
 
 
 
---- type definitions ---
+-- Type Definitions
 
 
 type WorldCoordinates
@@ -61,10 +65,12 @@ type Msg
     = MouseDown
     | MouseUp
     | MouseMove (Quantity Float Pixels) (Quantity Float Pixels)
+    | Projection
     | Reset
     | TotalAngular
     | ChangeL Int
     | Scrolling Float
+    | Zoom Zooming
       -- | ScrollIt (Quantity Float Pixels)
     | NoOp
 
@@ -75,15 +81,16 @@ type Direction
     | Z
 
 
-type AngularMomentum
-    = L
-    | J
+type Zooming
+    = In
+    | Out
 
 
 
---- main ---
+-- Main
 
 
+{-| -}
 main : Program () Model Msg
 main =
     Browser.document
@@ -111,23 +118,45 @@ init () =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update message model =
     case message of
+        Zoom dir ->
+            case dir of
+                -- TODO: Don't go smaller than in the Scrolling Event
+                In ->
+                    ( { model
+                        | distance =
+                            Length.meters
+                                (Length.inMeters model.distance
+                                    - 3
+                                )
+                      }
+                    , Cmd.none
+                    )
+
+                Out ->
+                    ( { model
+                        | distance =
+                            Length.meters
+                                (Length.inMeters model.distance
+                                    + 3
+                                )
+                      }
+                    , Cmd.none
+                    )
+
+        Reset ->
+            ( { model | azimuth = Angle.degrees 45, elevation = Angle.degrees 30 }, Cmd.none )
+
         NoOp ->
             ( model, Cmd.none )
 
         Scrolling flt ->
-            if Length.inMeters model.distance + (flt * 0.05) > 2 then
-                ( { model
-                    | distance =
-                        Length.meters
-                            (Length.inMeters model.distance
-                                + flt
-                                * 0.05
-                            )
-                  }
-                , Cmd.none
-                )
+            if Length.inMeters model.distance + (flt * zoomStep) > 2 then
+                -- Check if camera is to close to origin
+                -- value of 2 is arbitrary
+                ( updateDistanceBy flt model, Cmd.none )
 
             else
+                -- Don't zoom, when to close to origin
                 ( model, Cmd.none )
 
         ChangeL l ->
@@ -143,7 +172,7 @@ update message model =
             , Cmd.none
             )
 
-        Reset ->
+        Projection ->
             ( { model
                 | azimuth = Angle.degrees 0
                 , elevation = Angle.degrees 0
@@ -161,30 +190,7 @@ update message model =
         -- Orbit camera on mouse move (if a mouse button is down)
         MouseMove dx dy ->
             if model.orbiting then
-                let
-                    -- How fast we want to orbit the camera (orbiting the
-                    -- camera by 1 degree per pixel of drag is a decent default
-                    -- to start with)
-                    rotationRate =
-                        Angle.degrees 1 |> Quantity.per Pixels.pixel
-
-                    -- Adjust azimuth based on horizontal mouse motion (one
-                    -- degree per pixel)
-                    newAzimuth =
-                        model.azimuth
-                            |> Quantity.minus (dx |> Quantity.at rotationRate)
-
-                    -- Adjust elevation based on vertical mouse motion (one
-                    -- degree per pixel), and clamp to make sure camera cannot
-                    -- go past vertical in either direction
-                    newElevation =
-                        model.elevation
-                            |> Quantity.plus (dy |> Quantity.at rotationRate)
-                            |> Quantity.clamp (Angle.degrees -90) (Angle.degrees 90)
-                in
-                ( { model | azimuth = newAzimuth, elevation = newElevation }
-                , Cmd.none
-                )
+                ( updateViewBy dx dy model, Cmd.none )
 
             else
                 ( model, Cmd.none )
@@ -239,7 +245,7 @@ view model =
             Scene3d.unlit
                 { camera = camera
                 , clipDepth = Length.meters 0.1
-                , dimensions = ( Pixels.int 800, Pixels.int 600 )
+                , dimensions = ( Pixels.int myHeight, Pixels.int myWidth )
                 , background = Scene3d.transparentBackground
                 , entities =
                     List.concat
@@ -294,72 +300,54 @@ view model =
         screenRectangle =
             Rectangle2d.from Point2d.origin (Point2d.pixels myHeight myWidth)
 
+        mkHtmlElement x =
+            Element.el [] (Element.html x)
+
+        mkHtmlElementDiv x =
+            mkHtmlElement (div [] x)
+
+        scenePlusSvg =
+            Element.el
+                [ Element.inFront (Element.html svgElement) ]
+                (Element.html <| sceneElement)
+
         allElements =
             Element.layout [] <|
                 Element.column [ Element.spacing 12 ] <|
-                    [ -- Use Element.inFront to place the SVG element in front of the
-                      --WebGL element
-                      --     Element.el
-                      --       [ Element.inFront
-                      Element.el
-                        [ Element.inFront (Element.html svgElement) ]
-                        (Element.html <| sceneElement)
-
-                    --       , Element.width (Element.px 600)
-                    --       , Element.height (Element.px 600)
-                    --       ]
-                    --       (Element.html
-                    --           (div
-                    --               [ Wheel.onWheel
-                    --                   (\event ->
-                    --                       Scrolling event.deltaY
-                    --                   )
-                    --               ]
-                    --               [ text "scroll here" ]
-                    --           )
-                    --       )
-                    , Element.el [] (Element.html (h1 [] [ text "Control" ]))
-
-                    --      , Element.el
-                    --          [ Element.width (Element.px 600)
-                    --          , Element.height
-                    --              (Element.px 800)
-                    --          ]
-                    , Element.el []
-                        (Element.html
-                            (div
-                                []
-                                (List.concat
-                                    [ [ text "Choose orbital angular momentum " ]
-                                    , [ K.generate htmlGenerator <| inline "l" ]
-                                    , [ text ": " ]
-                                    ]
-                                )
-                            )
-                        )
-                    , Element.el []
-                        (Element.html
-                            (div []
-                                (List.concat
-                                    [ genLButtons
-                                        (List.range 0 9)
-                                    ]
-                                )
-                            )
-                        )
-                    , Element.el [] (Element.html (div [] [ text "Use total angular momentum: ", input [ type_ "checkbox", onClick TotalAngular ] [] ]))
-                    , Element.el [] (Element.html (h2 [] [ text "View" ]))
-                    , Element.el []
-                        (Element.html
-                            (div []
-                                [ button [ onClick Reset ]
+                    [ scenePlusSvg
+                    , mkHtmlElement (h1 [] [ text "Control" ])
+                    ]
+                        ++ List.map mkHtmlElementDiv
+                            [ [ text "Choose orbital angular momentum "
+                              , K.generate htmlGenerator <| inline "l"
+                              , text ": "
+                              ]
+                            , List.concat
+                                [ genLButtons
+                                    (List.range 0 9)
+                                ]
+                            , [ text "Show "
+                              , K.generate htmlGenerator <| inline "\\vec{j}"
+                              , text " instead of "
+                              , K.generate htmlGenerator <| inline "\\vec{l}"
+                              , text ": "
+                              , input [ type_ "checkbox", onClick TotalAngular ] []
+                              ]
+                            ]
+                        ++ [ mkHtmlElement (h2 [] [ text "View" ])
+                           , mkHtmlElementDiv
+                                [ button [ onClick Projection ]
                                     [ text "xz-Projection"
                                     ]
+                                , button [ onClick Reset ]
+                                    [ text "Reset"
+                                    ]
+                                , text "Zoom: "
+                                , button [ onClick (Zoom In) ] [ text "+" ]
+                                , button [ onClick (Zoom Out) ] [ text "-" ]
                                 ]
-                            )
-                        )
-                    , Element.el [] (Element.html (h1 [] [ text "Results" ]))
-                    ]
+                           , mkHtmlElement (h1 [] [ text "Results" ])
+                           ]
                         ++ (results model |> List.map Element.html)
     in
     { title = "Vector Model for Angular Momenta (Quantum Mechanics)"
@@ -509,23 +497,73 @@ subscriptions model =
 
 
 
----- Helper functions -------
+-- Helper Functions
 
 
+{-|
+
+
+### For `update`
+
+-}
+updateDistanceBy : Float -> Model -> Model
+updateDistanceBy flt model =
+    { model
+        | distance =
+            Length.meters
+                (Length.inMeters model.distance
+                    + flt
+                    * zoomStep
+                )
+    }
+
+
+updateViewBy dx dy model =
+    let
+        -- How fast we want to orbit the camera (orbiting the
+        -- camera by 1 degree per pixel of drag is a decent default
+        -- to start with)
+        rotationRate =
+            Angle.degrees 1 |> Quantity.per Pixels.pixel
+
+        -- Adjust azimuth based on horizontal mouse motion (one
+        -- degree per pixel)
+        newAzimuth =
+            model.azimuth
+                |> Quantity.minus (dx |> Quantity.at rotationRate)
+
+        -- Adjust elevation based on vertical mouse motion (one
+        -- degree per pixel), and clamp to make sure camera cannot
+        -- go past vertical in either direction
+        newElevation =
+            model.elevation
+                |> Quantity.plus (dy |> Quantity.at rotationRate)
+                |> Quantity.clamp (Angle.degrees -90) (Angle.degrees 90)
+    in
+    { model | azimuth = newAzimuth, elevation = newElevation }
+
+
+myHeight : number
 myHeight =
-    800
+    600
 
 
+myWidth : number
 myWidth =
     600
 
 
+zoomStep : Float
+zoomStep =
+    0.02
+
+
 topLeftFrame =
-    Frame2d.atPoint (Point2d.xy Quantity.zero (Pixels.float 600))
-        -- Frame2d.atPoint (Point2d.xy Quantity.zero (Pixels.float 600))
+    Frame2d.atPoint (Point2d.xy Quantity.zero (Pixels.float myWidth))
         |> Frame2d.reverseY
 
 
+toCartesianU : Float -> Float -> Direction -> Point3d.Point3d Length.Meters coordinates
 toCartesianU r phi direc =
     let
         x =
