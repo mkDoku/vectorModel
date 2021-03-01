@@ -7045,6 +7045,9 @@ var $ianmackenzie$elm_units$Angle$radians = function (numRadians) {
 var $ianmackenzie$elm_units$Angle$degrees = function (numDegrees) {
 	return $ianmackenzie$elm_units$Angle$radians($elm$core$Basics$pi * (numDegrees / 180));
 };
+var $ianmackenzie$elm_units$Length$meters = function (numMeters) {
+	return $ianmackenzie$elm_units$Quantity$Quantity(numMeters);
+};
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Main$init = function (_v0) {
@@ -7052,6 +7055,7 @@ var $author$project$Main$init = function (_v0) {
 		{
 			angularMomentum: 1,
 			azimuth: $ianmackenzie$elm_units$Angle$degrees(45),
+			distance: $ianmackenzie$elm_units$Length$meters(10),
 			elevation: $ianmackenzie$elm_units$Angle$degrees(30),
 			isTotalAngularMomentum: false,
 			orbiting: false,
@@ -7061,6 +7065,10 @@ var $author$project$Main$init = function (_v0) {
 };
 var $author$project$Main$MouseDown = {$: 'MouseDown'};
 var $author$project$Main$MouseUp = {$: 'MouseUp'};
+var $author$project$Main$NoOp = {$: 'NoOp'};
+var $author$project$Main$Scrolling = function (a) {
+	return {$: 'Scrolling', a: a};
+};
 var $elm$core$Platform$Sub$batch = _Platform_batch;
 var $author$project$Main$MouseMove = F2(
 	function (a, b) {
@@ -7082,6 +7090,7 @@ var $author$project$Main$decodeMouseMove = A3(
 		$elm$json$Json$Decode$field,
 		'movementY',
 		A2($elm$json$Json$Decode$map, $ianmackenzie$elm_units$Pixels$float, $elm$json$Json$Decode$float)));
+var $elm$json$Json$Decode$decodeValue = _Json_run;
 var $elm$browser$Browser$Events$Document = {$: 'Document'};
 var $elm$browser$Browser$Events$MySub = F3(
 	function (a, b, c) {
@@ -7485,6 +7494,9 @@ var $elm$browser$Browser$Events$on = F3(
 var $elm$browser$Browser$Events$onMouseDown = A2($elm$browser$Browser$Events$on, $elm$browser$Browser$Events$Document, 'mousedown');
 var $elm$browser$Browser$Events$onMouseMove = A2($elm$browser$Browser$Events$on, $elm$browser$Browser$Events$Document, 'mousemove');
 var $elm$browser$Browser$Events$onMouseUp = A2($elm$browser$Browser$Events$on, $elm$browser$Browser$Events$Document, 'mouseup');
+var $elm$json$Json$Decode$value = _Json_decodeValue;
+var $author$project$Main$onWheel = _Platform_incomingPort('onWheel', $elm$json$Json$Decode$value);
+var $author$project$Main$wheelDecoder = A2($elm$json$Json$Decode$field, 'deltaY', $elm$json$Json$Decode$float);
 var $author$project$Main$subscriptions = function (model) {
 	return model.orbiting ? $elm$core$Platform$Sub$batch(
 		_List_fromArray(
@@ -7492,8 +7504,22 @@ var $author$project$Main$subscriptions = function (model) {
 				$elm$browser$Browser$Events$onMouseMove($author$project$Main$decodeMouseMove),
 				$elm$browser$Browser$Events$onMouseUp(
 				$elm$json$Json$Decode$succeed($author$project$Main$MouseUp))
-			])) : $elm$browser$Browser$Events$onMouseDown(
-		$elm$json$Json$Decode$succeed($author$project$Main$MouseDown));
+			])) : $elm$core$Platform$Sub$batch(
+		_List_fromArray(
+			[
+				$elm$browser$Browser$Events$onMouseDown(
+				$elm$json$Json$Decode$succeed($author$project$Main$MouseDown)),
+				$author$project$Main$onWheel(
+				function (val) {
+					var _v0 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$wheelDecoder, val);
+					if (_v0.$ === 'Ok') {
+						var it = _v0.a;
+						return $author$project$Main$Scrolling(it);
+					} else {
+						return $author$project$Main$NoOp;
+					}
+				})
+			]));
 };
 var $ianmackenzie$elm_units$Quantity$at = F2(
 	function (_v0, _v1) {
@@ -7514,6 +7540,10 @@ var $ianmackenzie$elm_units$Quantity$clamp = F3(
 			A3($elm$core$Basics$clamp, lower, upper, value)) : $ianmackenzie$elm_units$Quantity$Quantity(
 			A3($elm$core$Basics$clamp, upper, lower, value));
 	});
+var $ianmackenzie$elm_units$Length$inMeters = function (_v0) {
+	var numMeters = _v0.a;
+	return numMeters;
+};
 var $ianmackenzie$elm_units$Quantity$minus = F2(
 	function (_v0, _v1) {
 		var y = _v0.a;
@@ -7543,6 +7573,18 @@ var $ianmackenzie$elm_units$Quantity$plus = F2(
 var $author$project$Main$update = F2(
 	function (message, model) {
 		switch (message.$) {
+			case 'NoOp':
+				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+			case 'Scrolling':
+				var flt = message.a;
+				return (($ianmackenzie$elm_units$Length$inMeters(model.distance) + (flt * 0.05)) > 2) ? _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							distance: $ianmackenzie$elm_units$Length$meters(
+								$ianmackenzie$elm_units$Length$inMeters(model.distance) + (flt * 0.05))
+						}),
+					$elm$core$Platform$Cmd$none) : _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 			case 'ChangeL':
 				var l = message.a;
 				return _Utils_Tuple2(
@@ -7948,9 +7990,6 @@ var $ianmackenzie$elm_3d_scene$Scene3d$Mesh$indexedFaces = function (givenMesh) 
 		var bounds = A2($ianmackenzie$elm_3d_scene$Scene3d$Mesh$vertexBounds, first, rest);
 		return A4($ianmackenzie$elm_3d_scene$Scene3d$Types$MeshWithNormals, bounds, givenMesh, webGLMesh, $ianmackenzie$elm_3d_scene$Scene3d$Types$KeepBackFaces);
 	}
-};
-var $ianmackenzie$elm_units$Length$meters = function (numMeters) {
-	return $ianmackenzie$elm_units$Quantity$Quantity(numMeters);
 };
 var $elm$core$Basics$modBy = _Basics_modBy;
 var $ianmackenzie$elm_units$Quantity$multiplyBy = F2(
@@ -18205,10 +18244,6 @@ var $ianmackenzie$elm_3d_scene$Scene3d$getViewBounds = F4(
 		}
 	});
 var $ianmackenzie$elm_3d_scene$Scene3d$Transformation$identity = {isRightHanded: true, ix: 1, iy: 0, iz: 0, jx: 0, jy: 1, jz: 0, kx: 0, ky: 0, kz: 1, px: 0, py: 0, pz: 0, scale: 1};
-var $ianmackenzie$elm_units$Length$inMeters = function (_v0) {
-	var numMeters = _v0.a;
-	return numMeters;
-};
 var $ianmackenzie$elm_3d_scene$Scene3d$initStencil = $ianmackenzie$elm_3d_scene$Scene3d$updateStencil(
 	{fail: $elm_explorations$webgl$WebGL$Settings$StencilTest$replace, mask: 0, ref: $ianmackenzie$elm_3d_scene$Scene3d$initialStencilCount, test: $elm_explorations$webgl$WebGL$Settings$StencilTest$always, writeMask: 255, zfail: $elm_explorations$webgl$WebGL$Settings$StencilTest$replace, zpass: $elm_explorations$webgl$WebGL$Settings$StencilTest$replace});
 var $ianmackenzie$elm_geometry$Vector3d$length = function (_v0) {
@@ -18688,7 +18723,7 @@ var $author$project$Main$view = function (model) {
 	var viewpoint = $ianmackenzie$elm_3d_camera$Viewpoint3d$orbitZ(
 		{
 			azimuth: model.azimuth,
-			distance: $ianmackenzie$elm_units$Length$meters(10),
+			distance: model.distance,
 			elevation: model.elevation,
 			focalPoint: A3($ianmackenzie$elm_geometry$Point3d$meters, 0, 0, 0)
 		});

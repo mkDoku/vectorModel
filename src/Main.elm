@@ -1,4 +1,4 @@
-module Main exposing (..)
+port module Main exposing (..)
 
 import Angle exposing (Angle)
 import Axis2d
@@ -15,8 +15,9 @@ import Frame2d
 import Geometry.Svg as Svg
 import Html exposing (button, div, h1, h2, input, span, text)
 import Html.Attributes exposing (type_)
-import Html.Events exposing (onClick)
-import Json.Decode as Decode exposing (Decoder)
+import Html.Events exposing (on, onClick)
+import Html.Events.Extra.Wheel as Wheel
+import Json.Decode as Decode exposing (Decoder, Value)
 import Katex as K exposing (human, inline)
 import Length
 import LineSegment3d
@@ -29,9 +30,12 @@ import Rectangle2d
 import Scene3d
 import Scene3d.Material as Material
 import Svg exposing (Svg)
-import Svg.Attributes
+import Svg.Attributes exposing (azimuth)
 import Vector3d
 import Viewpoint3d
+
+
+port onWheel : (Value -> msg) -> Sub msg
 
 
 
@@ -49,6 +53,7 @@ type alias Model =
     , angularMomentum : Int
     , totalAngularMomentum : Float
     , isTotalAngularMomentum : Bool
+    , distance : Length.Length
     }
 
 
@@ -59,6 +64,9 @@ type Msg
     | Reset
     | TotalAngular
     | ChangeL Int
+    | Scrolling Float
+      -- | ScrollIt (Quantity Float Pixels)
+    | NoOp
 
 
 type Direction
@@ -94,6 +102,7 @@ init () =
       , angularMomentum = 1
       , totalAngularMomentum = 1.5
       , isTotalAngularMomentum = False
+      , distance = Length.meters 10
       }
     , Cmd.none
     )
@@ -102,6 +111,25 @@ init () =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update message model =
     case message of
+        NoOp ->
+            ( model, Cmd.none )
+
+        Scrolling flt ->
+            if Length.inMeters model.distance + (flt * 0.05) > 2 then
+                ( { model
+                    | distance =
+                        Length.meters
+                            (Length.inMeters model.distance
+                                + flt
+                                * 0.05
+                            )
+                  }
+                , Cmd.none
+                )
+
+            else
+                ( model, Cmd.none )
+
         ChangeL l ->
             ( { model
                 | angularMomentum = l
@@ -180,7 +208,10 @@ view model =
                 { focalPoint = Point3d.meters 0 0 0
                 , azimuth = model.azimuth -- 45
                 , elevation = model.elevation -- 30
-                , distance = Length.meters 10
+
+                -- set distance as model variable to be able to change it with the
+                -- mousewheel
+                , distance = model.distance
                 }
 
         camera =
@@ -268,10 +299,32 @@ view model =
                 Element.column [ Element.spacing 12 ] <|
                     [ -- Use Element.inFront to place the SVG element in front of the
                       --WebGL element
+                      --     Element.el
+                      --       [ Element.inFront
                       Element.el
                         [ Element.inFront (Element.html svgElement) ]
                         (Element.html <| sceneElement)
+
+                    --       , Element.width (Element.px 600)
+                    --       , Element.height (Element.px 600)
+                    --       ]
+                    --       (Element.html
+                    --           (div
+                    --               [ Wheel.onWheel
+                    --                   (\event ->
+                    --                       Scrolling event.deltaY
+                    --                   )
+                    --               ]
+                    --               [ text "scroll here" ]
+                    --           )
+                    --       )
                     , Element.el [] (Element.html (h1 [] [ text "Control" ]))
+
+                    --      , Element.el
+                    --          [ Element.width (Element.px 600)
+                    --          , Element.height
+                    --              (Element.px 800)
+                    --          ]
                     , Element.el []
                         (Element.html
                             (div
@@ -434,7 +487,25 @@ subscriptions model =
     else
         -- If we're not currently orbiting, just listen for mouse down events
         -- to start orbiting
-        Browser.Events.onMouseDown (Decode.succeed MouseDown)
+        Sub.batch
+            [ Browser.Events.onMouseDown (Decode.succeed MouseDown)
+
+            -- , on "scroll" decodeScroll
+            , onWheel
+                (\val ->
+                    case Decode.decodeValue wheelDecoder val of
+                        Ok it ->
+                            Scrolling it
+
+                        Err _ ->
+                            NoOp
+                )
+
+            --      , Wheel.onWheel
+            --          (\event ->
+            --              Scrolling event.deltaY
+            --          )
+            ]
 
 
 
@@ -713,8 +784,17 @@ decodeMouseMove =
         (Decode.field "movementY" (Decode.map Pixels.float Decode.float))
 
 
+wheelDecoder : Decoder Float
+wheelDecoder =
+    -- Decode.map Scrolling
+    Decode.field "deltaY" Decode.float
 
--- genLButtons : [Int] -> [Html msg]
+
+
+--decodeScroll : Decoder Msg
+--decodeScroll =
+--    Decode.map ScrollIt
+--        (Decode.field "deltaY" (Decode.map Pixels.float Decode.float))
 
 
 genLButtons ls =
