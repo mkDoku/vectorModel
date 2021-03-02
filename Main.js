@@ -7495,9 +7495,6 @@ var $elm$browser$Browser$Events$onMouseDown = A2($elm$browser$Browser$Events$on,
 var $elm$browser$Browser$Events$onMouseMove = A2($elm$browser$Browser$Events$on, $elm$browser$Browser$Events$Document, 'mousemove');
 var $elm$browser$Browser$Events$onMouseUp = A2($elm$browser$Browser$Events$on, $elm$browser$Browser$Events$Document, 'mouseup');
 var $elm$json$Json$Decode$value = _Json_decodeValue;
-var $author$project$Main$onTouchEnd = _Platform_incomingPort('onTouchEnd', $elm$json$Json$Decode$value);
-var $author$project$Main$onTouchMove = _Platform_incomingPort('onTouchMove', $elm$json$Json$Decode$value);
-var $author$project$Main$onTouchStart = _Platform_incomingPort('onTouchStart', $elm$json$Json$Decode$value);
 var $author$project$Main$onWheel = _Platform_incomingPort('onWheel', $elm$json$Json$Decode$value);
 var $author$project$Main$wheelDecoder = A2($elm$json$Json$Decode$field, 'deltaY', $elm$json$Json$Decode$float);
 var $author$project$Main$subscriptions = function (model) {
@@ -7505,36 +7502,18 @@ var $author$project$Main$subscriptions = function (model) {
 		_List_fromArray(
 			[
 				$elm$browser$Browser$Events$onMouseMove($author$project$Main$decodeMouseMove),
-				$author$project$Main$onTouchMove(
-				function (val) {
-					var _v0 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$decodeMouseMove, val);
-					if (_v0.$ === 'Ok') {
-						var it = _v0.a;
-						return it;
-					} else {
-						return $author$project$Main$NoOp;
-					}
-				}),
 				$elm$browser$Browser$Events$onMouseUp(
-				$elm$json$Json$Decode$succeed($author$project$Main$MouseUp)),
-				$author$project$Main$onTouchEnd(
-				function (_v1) {
-					return $author$project$Main$MouseUp;
-				})
+				$elm$json$Json$Decode$succeed($author$project$Main$MouseUp))
 			])) : $elm$core$Platform$Sub$batch(
 		_List_fromArray(
 			[
 				$elm$browser$Browser$Events$onMouseDown(
 				$elm$json$Json$Decode$succeed($author$project$Main$MouseDown)),
-				$author$project$Main$onTouchStart(
-				function (_v2) {
-					return $author$project$Main$MouseDown;
-				}),
 				$author$project$Main$onWheel(
 				function (val) {
-					var _v3 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$wheelDecoder, val);
-					if (_v3.$ === 'Ok') {
-						var it = _v3.a;
+					var _v0 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$wheelDecoder, val);
+					if (_v0.$ === 'Ok') {
+						var it = _v0.a;
 						return $author$project$Main$Scrolling(it);
 					} else {
 						return $author$project$Main$NoOp;
@@ -10789,6 +10768,9 @@ var $author$project$Main$arrows = function (l) {
 			tmp));
 };
 var $elm$html$Html$button = _VirtualDom_node('button');
+var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
+var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
+var $author$project$Main$buttonStyle = A2($elm$html$Html$Attributes$style, 'margin', '2px');
 var $mdgriffith$elm_ui$Internal$Model$Unkeyed = function (a) {
 	return {$: 'Unkeyed', a: a};
 };
@@ -16496,6 +16478,182 @@ var $mdgriffith$elm_ui$Element$el = F2(
 				_List_fromArray(
 					[child])));
 	});
+var $mdgriffith$elm_ui$Internal$Model$Colored = F3(
+	function (a, b, c) {
+		return {$: 'Colored', a: a, b: b, c: c};
+	});
+var $mdgriffith$elm_ui$Internal$Model$StyleClass = F2(
+	function (a, b) {
+		return {$: 'StyleClass', a: a, b: b};
+	});
+var $mdgriffith$elm_ui$Internal$Flag$fontColor = $mdgriffith$elm_ui$Internal$Flag$flag(14);
+var $mdgriffith$elm_ui$Internal$Model$formatColorClass = function (_v0) {
+	var red = _v0.a;
+	var green = _v0.b;
+	var blue = _v0.c;
+	var alpha = _v0.d;
+	return $mdgriffith$elm_ui$Internal$Model$floatClass(red) + ('-' + ($mdgriffith$elm_ui$Internal$Model$floatClass(green) + ('-' + ($mdgriffith$elm_ui$Internal$Model$floatClass(blue) + ('-' + $mdgriffith$elm_ui$Internal$Model$floatClass(alpha))))));
+};
+var $mdgriffith$elm_ui$Element$Font$color = function (fontColor) {
+	return A2(
+		$mdgriffith$elm_ui$Internal$Model$StyleClass,
+		$mdgriffith$elm_ui$Internal$Flag$fontColor,
+		A3(
+			$mdgriffith$elm_ui$Internal$Model$Colored,
+			'fc-' + $mdgriffith$elm_ui$Internal$Model$formatColorClass(fontColor),
+			'color',
+			fontColor));
+};
+var $elm$html$Html$span = _VirtualDom_node('span');
+var $author$project$Main$elementGenerator = F2(
+	function (isDisplayMode, stringLatex) {
+		if ((isDisplayMode.$ === 'Just') && isDisplayMode.a) {
+			return A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text(stringLatex)
+					]));
+		} else {
+			return A2(
+				$elm$html$Html$span,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text(stringLatex)
+					]));
+		}
+	});
+var $yotamDvir$elm_katex$Katex$Configs$generate = F4(
+	function (g, m, h, latex) {
+		var g_ = A2(g, m, h);
+		if (latex.$ === 'Human') {
+			var f = latex.a;
+			return A2(
+				g_,
+				$elm$core$Maybe$Nothing,
+				f(h));
+		} else {
+			var b = latex.a;
+			var f = latex.b;
+			var env = b ? 'display' : 'inline';
+			return A2(
+				g_,
+				$elm$core$Maybe$Just(b),
+				'$begin-' + (env + ('$' + (f(m) + ('$end-' + (env + '$'))))));
+		}
+	});
+var $yotamDvir$elm_katex$Katex$generate = function (g) {
+	return A3(
+		$yotamDvir$elm_katex$Katex$Configs$generate,
+		F2(
+			function (_v0, _v1) {
+				return g;
+			}),
+		'',
+		'');
+};
+var $elm$core$Basics$always = F2(
+	function (a, _v0) {
+		return a;
+	});
+var $mdgriffith$elm_ui$Internal$Model$unstyled = A2($elm$core$Basics$composeL, $mdgriffith$elm_ui$Internal$Model$Unstyled, $elm$core$Basics$always);
+var $mdgriffith$elm_ui$Element$html = $mdgriffith$elm_ui$Internal$Model$unstyled;
+var $yotamDvir$elm_katex$Katex$Configs$Human = function (a) {
+	return {$: 'Human', a: a};
+};
+var $yotamDvir$elm_katex$Katex$Configs$human = $yotamDvir$elm_katex$Katex$Configs$Human;
+var $yotamDvir$elm_katex$Katex$human = A2($elm$core$Basics$composeL, $yotamDvir$elm_katex$Katex$Configs$human, $elm$core$Basics$always);
+var $elm$html$Html$Attributes$href = function (url) {
+	return A2(
+		$elm$html$Html$Attributes$stringProperty,
+		'href',
+		_VirtualDom_noJavaScriptUri(url));
+};
+var $elm$html$Html$Attributes$rel = _VirtualDom_attribute('rel');
+var $mdgriffith$elm_ui$Element$link = F2(
+	function (attrs, _v0) {
+		var url = _v0.url;
+		var label = _v0.label;
+		return A4(
+			$mdgriffith$elm_ui$Internal$Model$element,
+			$mdgriffith$elm_ui$Internal$Model$asEl,
+			$mdgriffith$elm_ui$Internal$Model$NodeName('a'),
+			A2(
+				$elm$core$List$cons,
+				$mdgriffith$elm_ui$Internal$Model$Attr(
+					$elm$html$Html$Attributes$href(url)),
+				A2(
+					$elm$core$List$cons,
+					$mdgriffith$elm_ui$Internal$Model$Attr(
+						$elm$html$Html$Attributes$rel('noopener noreferrer')),
+					A2(
+						$elm$core$List$cons,
+						$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$shrink),
+						A2(
+							$elm$core$List$cons,
+							$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$shrink),
+							A2(
+								$elm$core$List$cons,
+								$mdgriffith$elm_ui$Internal$Model$htmlClass($mdgriffith$elm_ui$Internal$Style$classes.contentCenterX + (' ' + ($mdgriffith$elm_ui$Internal$Style$classes.contentCenterY + (' ' + $mdgriffith$elm_ui$Internal$Style$classes.link)))),
+								attrs))))),
+			$mdgriffith$elm_ui$Internal$Model$Unkeyed(
+				_List_fromArray(
+					[label])));
+	});
+var $mdgriffith$elm_ui$Internal$Model$Rgba = F4(
+	function (a, b, c, d) {
+		return {$: 'Rgba', a: a, b: b, c: c, d: d};
+	});
+var $mdgriffith$elm_ui$Element$rgb = F3(
+	function (r, g, b) {
+		return A4($mdgriffith$elm_ui$Internal$Model$Rgba, r, g, b, 1);
+	});
+var $mdgriffith$elm_ui$Internal$Model$Text = function (a) {
+	return {$: 'Text', a: a};
+};
+var $mdgriffith$elm_ui$Element$text = function (content) {
+	return $mdgriffith$elm_ui$Internal$Model$Text(content);
+};
+var $mdgriffith$elm_ui$Element$Font$underline = $mdgriffith$elm_ui$Internal$Model$htmlClass($mdgriffith$elm_ui$Internal$Style$classes.underline);
+var $author$project$Main$explanationText = _Utils_ap(
+	_List_fromArray(
+		[
+			$mdgriffith$elm_ui$Element$html(
+			A2(
+				$yotamDvir$elm_katex$Katex$generate,
+				$author$project$Main$elementGenerator,
+				$yotamDvir$elm_katex$Katex$human('This page was created to demonstrate the ')))
+		]),
+	_Utils_ap(
+		_List_fromArray(
+			[
+				A2(
+				$mdgriffith$elm_ui$Element$link,
+				_List_fromArray(
+					[
+						$mdgriffith$elm_ui$Element$Font$color(
+						A3($mdgriffith$elm_ui$Element$rgb, 0, 0, 1)),
+						$mdgriffith$elm_ui$Element$Font$underline
+					]),
+				{
+					label: $mdgriffith$elm_ui$Element$text('vector model'),
+					url: 'https://en.wikipedia.org/wiki/Vector_model_of_the_atom'
+				})
+			]),
+		_List_fromArray(
+			[
+				$mdgriffith$elm_ui$Element$html(
+				A2(
+					$yotamDvir$elm_katex$Katex$generate,
+					$author$project$Main$elementGenerator,
+					$yotamDvir$elm_katex$Katex$human(' for quantum mechanical angular momenta.\n' + ('You can rotate the model in three dimensional space ' + ('by holding the left mouse button and move the cursor.' + ('Unfortunately, rotating the model is not possible on ' + ('a mobile device, yet. Zoom in or out of the model by ' + ('using the scroll wheel or the zoom buttons below.' + ('Depending on your screen size, scrolling will interfere ' + ('with the zoom function. For this you can disable the ' + 'scrolling of your browser window with the above buttons.'))))))))))
+			])));
+var $mdgriffith$elm_ui$Internal$Model$Fill = function (a) {
+	return {$: 'Fill', a: a};
+};
+var $mdgriffith$elm_ui$Element$fill = $mdgriffith$elm_ui$Internal$Model$Fill(1);
 var $elm$svg$Svg$Attributes$fill = _VirtualDom_attribute('fill');
 var $elm$svg$Svg$Attributes$fontFamily = _VirtualDom_attribute('font-family');
 var $elm$svg$Svg$Attributes$fontSize = _VirtualDom_attribute('font-size');
@@ -16589,7 +16747,8 @@ var $author$project$Main$genLButton = function (l) {
 		_List_fromArray(
 			[
 				$elm$html$Html$Events$onClick(
-				$author$project$Main$ChangeL(l))
+				$author$project$Main$ChangeL(l)),
+				$author$project$Main$buttonStyle
 			]),
 		_List_fromArray(
 			[
@@ -16600,51 +16759,17 @@ var $author$project$Main$genLButton = function (l) {
 var $author$project$Main$genLButtons = function (ls) {
 	return A2($elm$core$List$map, $author$project$Main$genLButton, ls);
 };
-var $yotamDvir$elm_katex$Katex$Configs$generate = F4(
-	function (g, m, h, latex) {
-		var g_ = A2(g, m, h);
-		if (latex.$ === 'Human') {
-			var f = latex.a;
-			return A2(
-				g_,
-				$elm$core$Maybe$Nothing,
-				f(h));
-		} else {
-			var b = latex.a;
-			var f = latex.b;
-			var env = b ? 'display' : 'inline';
-			return A2(
-				g_,
-				$elm$core$Maybe$Just(b),
-				'$begin-' + (env + ('$' + (f(m) + ('$end-' + (env + '$'))))));
-		}
-	});
-var $yotamDvir$elm_katex$Katex$generate = function (g) {
-	return A3(
-		$yotamDvir$elm_katex$Katex$Configs$generate,
-		F2(
-			function (_v0, _v1) {
-				return g;
-			}),
-		'',
-		'');
-};
 var $elm$html$Html$h1 = _VirtualDom_node('h1');
-var $elm$html$Html$h2 = _VirtualDom_node('h2');
 var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
-var $elm$core$Basics$always = F2(
-	function (a, _v0) {
-		return a;
-	});
-var $mdgriffith$elm_ui$Internal$Model$unstyled = A2($elm$core$Basics$composeL, $mdgriffith$elm_ui$Internal$Model$Unstyled, $elm$core$Basics$always);
-var $mdgriffith$elm_ui$Element$html = $mdgriffith$elm_ui$Internal$Model$unstyled;
-var $elm$html$Html$span = _VirtualDom_node('span');
 var $author$project$Main$htmlGenerator = F2(
 	function (isDisplayMode, stringLatex) {
 		if ((isDisplayMode.$ === 'Just') && isDisplayMode.a) {
 			return A2(
 				$elm$html$Html$div,
-				_List_Nil,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'font-size', '1rem')
+					]),
 				_List_fromArray(
 					[
 						$elm$html$Html$text(stringLatex)
@@ -16652,7 +16777,10 @@ var $author$project$Main$htmlGenerator = F2(
 		} else {
 			return A2(
 				$elm$html$Html$span,
-				_List_Nil,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'font-size', '1rem')
+					]),
 				_List_fromArray(
 					[
 						$elm$html$Html$text(stringLatex)
@@ -16696,10 +16824,6 @@ var $mdgriffith$elm_ui$Internal$Model$StaticRootAndDynamic = F2(
 	});
 var $mdgriffith$elm_ui$Internal$Model$AllowHover = {$: 'AllowHover'};
 var $mdgriffith$elm_ui$Internal$Model$Layout = {$: 'Layout'};
-var $mdgriffith$elm_ui$Internal$Model$Rgba = F4(
-	function (a, b, c, d) {
-		return {$: 'Rgba', a: a, b: b, c: c, d: d};
-	});
 var $mdgriffith$elm_ui$Internal$Model$focusDefaultStyle = {
 	backgroundColor: $elm$core$Maybe$Nothing,
 	borderColor: $elm$core$Maybe$Nothing,
@@ -16834,10 +16958,6 @@ var $mdgriffith$elm_ui$Internal$Model$renderRoot = F3(
 					_List_fromArray(
 						[child]))));
 	});
-var $mdgriffith$elm_ui$Internal$Model$Colored = F3(
-	function (a, b, c) {
-		return {$: 'Colored', a: a, b: b, c: c};
-	});
 var $mdgriffith$elm_ui$Internal$Model$FontFamily = F2(
 	function (a, b) {
 		return {$: 'FontFamily', a: a, b: b};
@@ -16846,24 +16966,12 @@ var $mdgriffith$elm_ui$Internal$Model$FontSize = function (a) {
 	return {$: 'FontSize', a: a};
 };
 var $mdgriffith$elm_ui$Internal$Model$SansSerif = {$: 'SansSerif'};
-var $mdgriffith$elm_ui$Internal$Model$StyleClass = F2(
-	function (a, b) {
-		return {$: 'StyleClass', a: a, b: b};
-	});
 var $mdgriffith$elm_ui$Internal$Model$Typeface = function (a) {
 	return {$: 'Typeface', a: a};
 };
 var $mdgriffith$elm_ui$Internal$Flag$bgColor = $mdgriffith$elm_ui$Internal$Flag$flag(8);
-var $mdgriffith$elm_ui$Internal$Flag$fontColor = $mdgriffith$elm_ui$Internal$Flag$flag(14);
 var $mdgriffith$elm_ui$Internal$Flag$fontFamily = $mdgriffith$elm_ui$Internal$Flag$flag(5);
 var $mdgriffith$elm_ui$Internal$Flag$fontSize = $mdgriffith$elm_ui$Internal$Flag$flag(4);
-var $mdgriffith$elm_ui$Internal$Model$formatColorClass = function (_v0) {
-	var red = _v0.a;
-	var green = _v0.b;
-	var blue = _v0.c;
-	var alpha = _v0.d;
-	return $mdgriffith$elm_ui$Internal$Model$floatClass(red) + ('-' + ($mdgriffith$elm_ui$Internal$Model$floatClass(green) + ('-' + ($mdgriffith$elm_ui$Internal$Model$floatClass(blue) + ('-' + $mdgriffith$elm_ui$Internal$Model$floatClass(alpha))))));
-};
 var $elm$core$String$toLower = _String_toLower;
 var $elm$core$String$words = _String_words;
 var $mdgriffith$elm_ui$Internal$Model$renderFontClassName = F2(
@@ -16963,6 +17071,14 @@ var $mdgriffith$elm_ui$Element$layoutWith = F3(
 	});
 var $mdgriffith$elm_ui$Element$layout = $mdgriffith$elm_ui$Element$layoutWith(
 	{options: _List_Nil});
+var $mdgriffith$elm_ui$Internal$Model$Max = F2(
+	function (a, b) {
+		return {$: 'Max', a: a, b: b};
+	});
+var $mdgriffith$elm_ui$Element$maximum = F2(
+	function (i, l) {
+		return A2($mdgriffith$elm_ui$Internal$Model$Max, i, l);
+	});
 var $ianmackenzie$elm_geometry$Point2d$origin = $ianmackenzie$elm_geometry$Geometry$Types$Point2d(
 	{x: 0, y: 0});
 var $ianmackenzie$elm_geometry$Direction2d$x = $ianmackenzie$elm_geometry$Direction2d$positiveX;
@@ -17283,9 +17399,68 @@ var $ianmackenzie$elm_3d_camera$Viewpoint3d$orbitZ = function (_v0) {
 	return $ianmackenzie$elm_3d_camera$Viewpoint3d$orbit(
 		{azimuth: azimuth, distance: distance, elevation: elevation, focalPoint: focalPoint, groundPlane: $ianmackenzie$elm_geometry$SketchPlane3d$xy});
 };
+var $mdgriffith$elm_ui$Internal$Model$PaddingStyle = F5(
+	function (a, b, c, d, e) {
+		return {$: 'PaddingStyle', a: a, b: b, c: c, d: d, e: e};
+	});
+var $mdgriffith$elm_ui$Internal$Flag$padding = $mdgriffith$elm_ui$Internal$Flag$flag(2);
+var $mdgriffith$elm_ui$Element$padding = function (x) {
+	var f = x;
+	return A2(
+		$mdgriffith$elm_ui$Internal$Model$StyleClass,
+		$mdgriffith$elm_ui$Internal$Flag$padding,
+		A5(
+			$mdgriffith$elm_ui$Internal$Model$PaddingStyle,
+			'p-' + $elm$core$String$fromInt(x),
+			f,
+			f,
+			f,
+			f));
+};
 var $elm$core$Tuple$pair = F2(
 	function (a, b) {
 		return _Utils_Tuple2(a, b);
+	});
+var $mdgriffith$elm_ui$Internal$Model$Describe = function (a) {
+	return {$: 'Describe', a: a};
+};
+var $mdgriffith$elm_ui$Internal$Model$Paragraph = {$: 'Paragraph'};
+var $mdgriffith$elm_ui$Internal$Model$SpacingStyle = F3(
+	function (a, b, c) {
+		return {$: 'SpacingStyle', a: a, b: b, c: c};
+	});
+var $mdgriffith$elm_ui$Internal$Flag$spacing = $mdgriffith$elm_ui$Internal$Flag$flag(3);
+var $mdgriffith$elm_ui$Internal$Model$spacingName = F2(
+	function (x, y) {
+		return 'spacing-' + ($elm$core$String$fromInt(x) + ('-' + $elm$core$String$fromInt(y)));
+	});
+var $mdgriffith$elm_ui$Element$spacing = function (x) {
+	return A2(
+		$mdgriffith$elm_ui$Internal$Model$StyleClass,
+		$mdgriffith$elm_ui$Internal$Flag$spacing,
+		A3(
+			$mdgriffith$elm_ui$Internal$Model$SpacingStyle,
+			A2($mdgriffith$elm_ui$Internal$Model$spacingName, x, x),
+			x,
+			x));
+};
+var $mdgriffith$elm_ui$Element$paragraph = F2(
+	function (attrs, children) {
+		return A4(
+			$mdgriffith$elm_ui$Internal$Model$element,
+			$mdgriffith$elm_ui$Internal$Model$asParagraph,
+			$mdgriffith$elm_ui$Internal$Model$div,
+			A2(
+				$elm$core$List$cons,
+				$mdgriffith$elm_ui$Internal$Model$Describe($mdgriffith$elm_ui$Internal$Model$Paragraph),
+				A2(
+					$elm$core$List$cons,
+					$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
+					A2(
+						$elm$core$List$cons,
+						$mdgriffith$elm_ui$Element$spacing(5),
+						attrs))),
+			$mdgriffith$elm_ui$Internal$Model$Unkeyed(children));
 	});
 var $ianmackenzie$elm_3d_camera$Camera3d$Types$Camera3d = function (a) {
 	return {$: 'Camera3d', a: a};
@@ -17372,11 +17547,24 @@ var $ianmackenzie$elm_geometry_svg$Geometry$Svg$relativeTo = function (frame) {
 			$ianmackenzie$elm_geometry$Frame2d$copy(frame),
 			$ianmackenzie$elm_geometry$Frame2d$atOrigin));
 };
-var $yotamDvir$elm_katex$Katex$Configs$Human = function (a) {
-	return {$: 'Human', a: a};
+var $elm$core$Basics$pow = _Basics_pow;
+var $jjant$elm_printf$Printf$trimDigits = F2(
+	function (precision, num) {
+		return $elm$core$String$fromFloat(
+			function (v) {
+				return v / A2($elm$core$Basics$pow, 10, precision);
+			}(
+				$elm$core$Basics$round(
+					num * A2($elm$core$Basics$pow, 10, precision))));
+	});
+var $jjant$elm_printf$Printf$f = F3(
+	function (precision, k, flt) {
+		return k(
+			A2($jjant$elm_printf$Printf$trimDigits, precision, flt));
+	});
+var $jjant$elm_printf$Printf$printf = function (fmt) {
+	return fmt($elm$core$Basics$identity);
 };
-var $yotamDvir$elm_katex$Katex$Configs$human = $yotamDvir$elm_katex$Katex$Configs$Human;
-var $yotamDvir$elm_katex$Katex$human = A2($elm$core$Basics$composeL, $yotamDvir$elm_katex$Katex$Configs$human, $elm$core$Basics$always);
 var $elm$core$List$intersperse = F2(
 	function (sep, xs) {
 		if (!xs.b) {
@@ -17417,13 +17605,6 @@ var $author$project$Main$showResult = F2(
 		return _List_fromArray(
 			[
 				A2(
-				$elm$html$Html$h2,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$elm$html$Html$text(heading)
-					])),
-				A2(
 				$elm$html$Html$div,
 				_List_Nil,
 				A2(
@@ -17453,7 +17634,10 @@ var $author$project$Main$showResult = F2(
 							lengthText(_char)),
 							$yotamDvir$elm_katex$Katex$human(' = '),
 							$yotamDvir$elm_katex$Katex$human(
-							$elm$core$String$fromFloat(length)),
+							A2(
+								$jjant$elm_printf$Printf$printf,
+								$jjant$elm_printf$Printf$f(6),
+								length)),
 							$yotamDvir$elm_katex$Katex$inline('\\hbar')
 						])))
 			]);
@@ -17471,7 +17655,18 @@ var $author$project$Main$results = function (model) {
 	var passJ = _Utils_Tuple3(headingJ, charJ, textJ);
 	return _Utils_ap(
 		A2($author$project$Main$showResult, passL, orbitalAnuglar),
-		A2($author$project$Main$showResult, passJ, totalAngular));
+		_Utils_ap(
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$div,
+					_List_Nil,
+					_List_fromArray(
+						[
+							$elm$html$Html$text(' ')
+						]))
+				]),
+			A2($author$project$Main$showResult, passJ, totalAngular)));
 };
 var $author$project$Main$toCartesianU = F3(
 	function (r, phi, direc) {
@@ -17508,25 +17703,6 @@ var $author$project$Main$ringU = F3(
 			$ianmackenzie$elm_3d_scene$Scene3d$lineSegment(color),
 			A2($elm$core$List$map, $ianmackenzie$elm_geometry$LineSegment3d$fromEndpoints, valuesT));
 	});
-var $mdgriffith$elm_ui$Internal$Model$SpacingStyle = F3(
-	function (a, b, c) {
-		return {$: 'SpacingStyle', a: a, b: b, c: c};
-	});
-var $mdgriffith$elm_ui$Internal$Flag$spacing = $mdgriffith$elm_ui$Internal$Flag$flag(3);
-var $mdgriffith$elm_ui$Internal$Model$spacingName = F2(
-	function (x, y) {
-		return 'spacing-' + ($elm$core$String$fromInt(x) + ('-' + $elm$core$String$fromInt(y)));
-	});
-var $mdgriffith$elm_ui$Element$spacing = function (x) {
-	return A2(
-		$mdgriffith$elm_ui$Internal$Model$StyleClass,
-		$mdgriffith$elm_ui$Internal$Flag$spacing,
-		A3(
-			$mdgriffith$elm_ui$Internal$Model$SpacingStyle,
-			A2($mdgriffith$elm_ui$Internal$Model$spacingName, x, x),
-			x,
-			x));
-};
 var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
 var $elm$core$String$append = _String_append;
 var $author$project$Main$stupidStrConvert = F3(
@@ -17709,8 +17885,6 @@ var $elm_explorations$webgl$WebGL$Internal$Stencil = function (a) {
 	return {$: 'Stencil', a: a};
 };
 var $elm_explorations$webgl$WebGL$stencil = $elm_explorations$webgl$WebGL$Internal$Stencil;
-var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
-var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $avh4$elm_color$Color$toCssString = function (_v0) {
 	var r = _v0.a;
 	var g = _v0.b;
@@ -17942,7 +18116,6 @@ var $ianmackenzie$elm_3d_scene$Scene3d$resetStencil = $ianmackenzie$elm_3d_scene
 	{fail: $elm_explorations$webgl$WebGL$Settings$StencilTest$replace, mask: 0, ref: $ianmackenzie$elm_3d_scene$Scene3d$initialStencilCount, test: $elm_explorations$webgl$WebGL$Settings$StencilTest$always, writeMask: $ianmackenzie$elm_3d_scene$Scene3d$lowerFourBits, zfail: $elm_explorations$webgl$WebGL$Settings$StencilTest$replace, zpass: $elm_explorations$webgl$WebGL$Settings$StencilTest$replace});
 var $elm_explorations$webgl$WebGL$Settings$StencilTest$greater = $elm_explorations$webgl$WebGL$Settings$StencilTest$Test(516);
 var $elm_explorations$webgl$WebGL$Settings$StencilTest$invert = $elm_explorations$webgl$WebGL$Settings$StencilTest$Operation(5386);
-var $elm$core$Basics$pow = _Basics_pow;
 var $ianmackenzie$elm_3d_scene$Scene3d$singleLightMask = function (index) {
 	return A2($elm$core$Basics$pow, 2, index + 4);
 };
@@ -18886,9 +19059,9 @@ var $author$project$Main$view = function (model) {
 				_List_fromArray(
 					[
 						$author$project$Main$arrows(angularMomentum),
-						A3($author$project$Main$ringU, angularMomentum, 50, $author$project$Main$X),
-						A3($author$project$Main$ringU, angularMomentum, 50, $author$project$Main$Y),
-						A3($author$project$Main$ringU, angularMomentum, 50, $author$project$Main$Z),
+						A3($author$project$Main$ringU, angularMomentum, 80, $author$project$Main$X),
+						A3($author$project$Main$ringU, angularMomentum, 80, $author$project$Main$Y),
+						A3($author$project$Main$ringU, angularMomentum, 80, $author$project$Main$Z),
 						$author$project$Main$coords,
 						A2($author$project$Main$dashedLines, angularMomentum, 50)
 					]))
@@ -18903,25 +19076,42 @@ var $author$project$Main$view = function (model) {
 		$mdgriffith$elm_ui$Element$html(sceneElement));
 	var allElements = A2(
 		$mdgriffith$elm_ui$Element$layout,
-		_List_Nil,
+		_List_fromArray(
+			[
+				$mdgriffith$elm_ui$Element$padding(20)
+			]),
 		A2(
 			$mdgriffith$elm_ui$Element$column,
 			_List_fromArray(
 				[
-					$mdgriffith$elm_ui$Element$spacing(12)
+					$mdgriffith$elm_ui$Element$spacing(15),
+					$mdgriffith$elm_ui$Element$padding(15)
 				]),
 			_Utils_ap(
 				_List_fromArray(
 					[
-						scenePlusSvg,
-						mkHtmlElement(
 						A2(
-							$elm$html$Html$h1,
-							_List_Nil,
+						$mdgriffith$elm_ui$Element$el,
+						_List_Nil,
+						$mdgriffith$elm_ui$Element$html(
+							A2(
+								$elm$html$Html$div,
+								_List_Nil,
+								_List_fromArray(
+									[
+										$elm$html$Html$text(' ')
+									])))),
+						A2(
+						$mdgriffith$elm_ui$Element$el,
+						_List_Nil,
+						A2(
+							$mdgriffith$elm_ui$Element$paragraph,
 							_List_fromArray(
 								[
-									$elm$html$Html$text('Control')
-								])))
+									$mdgriffith$elm_ui$Element$width(
+									A2($mdgriffith$elm_ui$Element$maximum, $author$project$Main$myWidth, $mdgriffith$elm_ui$Element$fill))
+								]),
+							$author$project$Main$explanationText))
 					]),
 				_Utils_ap(
 					A2(
@@ -18969,75 +19159,83 @@ var $author$project$Main$view = function (model) {
 							])),
 					_Utils_ap(
 						_List_fromArray(
-							[
-								mkHtmlElement(
-								A2(
-									$elm$html$Html$h2,
-									_List_Nil,
+							[scenePlusSvg]),
+						_Utils_ap(
+							_List_fromArray(
+								[
+									mkHtmlElementDiv(
 									_List_fromArray(
 										[
-											$elm$html$Html$text('View')
-										]))),
-								mkHtmlElementDiv(
-								_List_fromArray(
-									[
-										A2(
-										$elm$html$Html$button,
+											A2(
+											$elm$html$Html$button,
+											_List_fromArray(
+												[
+													$elm$html$Html$Events$onClick($author$project$Main$Projection),
+													$author$project$Main$buttonStyle
+												]),
+											_List_fromArray(
+												[
+													$elm$html$Html$text('xz-Projection')
+												])),
+											A2(
+											$elm$html$Html$button,
+											_List_fromArray(
+												[
+													$elm$html$Html$Events$onClick($author$project$Main$Reset),
+													$author$project$Main$buttonStyle
+												]),
+											_List_fromArray(
+												[
+													$elm$html$Html$text('Reset')
+												])),
+											A2(
+											$elm$html$Html$span,
+											_List_fromArray(
+												[
+													A2($elm$html$Html$Attributes$style, 'margin-left', '10px')
+												]),
+											_List_fromArray(
+												[
+													$elm$html$Html$text('Zoom: ')
+												])),
+											A2(
+											$elm$html$Html$button,
+											_List_fromArray(
+												[
+													$elm$html$Html$Events$onClick(
+													$author$project$Main$Zoom($author$project$Main$In)),
+													$author$project$Main$buttonStyle
+												]),
+											_List_fromArray(
+												[
+													$elm$html$Html$text('+')
+												])),
+											A2(
+											$elm$html$Html$button,
+											_List_fromArray(
+												[
+													$elm$html$Html$Events$onClick(
+													$author$project$Main$Zoom($author$project$Main$Out)),
+													$author$project$Main$buttonStyle
+												]),
+											_List_fromArray(
+												[
+													$elm$html$Html$text('-')
+												]))
+										])),
+									mkHtmlElement(
+									A2(
+										$elm$html$Html$h1,
+										_List_Nil,
 										_List_fromArray(
 											[
-												$elm$html$Html$Events$onClick($author$project$Main$Projection)
-											]),
-										_List_fromArray(
-											[
-												$elm$html$Html$text('xz-Projection')
-											])),
-										A2(
-										$elm$html$Html$button,
-										_List_fromArray(
-											[
-												$elm$html$Html$Events$onClick($author$project$Main$Reset)
-											]),
-										_List_fromArray(
-											[
-												$elm$html$Html$text('Reset')
-											])),
-										$elm$html$Html$text('Zoom: '),
-										A2(
-										$elm$html$Html$button,
-										_List_fromArray(
-											[
-												$elm$html$Html$Events$onClick(
-												$author$project$Main$Zoom($author$project$Main$In))
-											]),
-										_List_fromArray(
-											[
-												$elm$html$Html$text('+')
-											])),
-										A2(
-										$elm$html$Html$button,
-										_List_fromArray(
-											[
-												$elm$html$Html$Events$onClick(
-												$author$project$Main$Zoom($author$project$Main$Out))
-											]),
-										_List_fromArray(
-											[
-												$elm$html$Html$text('-')
-											]))
-									])),
-								mkHtmlElement(
-								A2(
-									$elm$html$Html$h1,
-									_List_Nil,
-									_List_fromArray(
-										[
-											$elm$html$Html$text('Results')
-										])))
-							]),
-						A2(
-							$elm$core$List$map,
-							$mdgriffith$elm_ui$Element$html,
-							$author$project$Main$results(model)))))));
+												$elm$html$Html$text('Results')
+											])))
+								]),
+							A2(
+								$elm$core$List$map,
+								$mdgriffith$elm_ui$Element$html,
+								$author$project$Main$results(model))))))));
 	return {
 		body: _List_fromArray(
 			[allElements]),

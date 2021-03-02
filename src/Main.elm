@@ -11,10 +11,11 @@ import Cone3d
 import Cylinder3d
 import Direction2d
 import Element
+import Element.Font as Font
 import Frame2d
 import Geometry.Svg as Svg
-import Html exposing (button, div, h1, h2, input, span, text)
-import Html.Attributes exposing (type_)
+import Html exposing (button, div, h1, h2, input, p, span, text)
+import Html.Attributes exposing (style, type_)
 import Html.Events exposing (on, onClick)
 import Html.Events.Extra.Wheel as Wheel
 import Json.Decode as Decode exposing (Decoder, Value)
@@ -25,6 +26,7 @@ import Pixels exposing (Pixels)
 import Point2d
 import Point3d
 import Point3d.Projection
+import Printf
 import Quantity exposing (Quantity)
 import Rectangle2d
 import Scene3d
@@ -40,15 +42,6 @@ import Viewpoint3d
 For the use see: <https://ellie-app.com/qqp6pVJRQa1/0>
 -}
 port onWheel : (Value -> msg) -> Sub msg
-
-
-port onTouchMove : (Value -> msg) -> Sub msg
-
-
-port onTouchStart : (Value -> msg) -> Sub msg
-
-
-port onTouchEnd : (Value -> msg) -> Sub msg
 
 
 
@@ -259,9 +252,9 @@ view model =
                 , entities =
                     List.concat
                         [ arrows angularMomentum
-                        , ringU angularMomentum 50 X
-                        , ringU angularMomentum 50 Y
-                        , ringU angularMomentum 50 Z
+                        , ringU angularMomentum 80 X
+                        , ringU angularMomentum 80 Y
+                        , ringU angularMomentum 80 Z
                         , coords
                         , dashedLines angularMomentum 50
                         ]
@@ -321,10 +314,19 @@ view model =
                 (Element.html <| sceneElement)
 
         allElements =
-            Element.layout [] <|
-                Element.column [ Element.spacing 12 ] <|
-                    [ scenePlusSvg
-                    , mkHtmlElement (h1 [] [ text "Control" ])
+            Element.layout [ Element.padding 20 ] <|
+                Element.column
+                    [ Element.spacing 15
+                    , Element.padding 15
+                    ]
+                <|
+                    [ Element.el [] (Element.html (div [] [ text " " ]))
+                    , Element.el []
+                        (Element.paragraph
+                            -- Width already handled by layout, but here we can adjust ist
+                            [ Element.width (Element.fill |> Element.maximum myWidth) ]
+                            explanationText
+                        )
                     ]
                         ++ List.map mkHtmlElementDiv
                             [ [ text "Choose orbital angular momentum "
@@ -343,17 +345,25 @@ view model =
                               , input [ type_ "checkbox", onClick TotalAngular ] []
                               ]
                             ]
-                        ++ [ mkHtmlElement (h2 [] [ text "View" ])
-                           , mkHtmlElementDiv
-                                [ button [ onClick Projection ]
+                        ++ [ scenePlusSvg
+
+                           --     , mkHtmlElement (h1 [] [ text "Control" ])
+                           ]
+                        ++ [ -- mkHtmlElement (h2 [] [ text "View" ])
+                             --  , mkHtmlElementDiv
+                             mkHtmlElementDiv
+                                [ button [ onClick Projection, buttonStyle ]
                                     [ text "xz-Projection"
                                     ]
-                                , button [ onClick Reset ]
+                                , button [ onClick Reset, buttonStyle ]
                                     [ text "Reset"
                                     ]
-                                , text "Zoom: "
-                                , button [ onClick (Zoom In) ] [ text "+" ]
-                                , button [ onClick (Zoom Out) ] [ text "-" ]
+                                , span
+                                    [ style "margin-left" "10px"
+                                    ]
+                                    [ text "Zoom: " ]
+                                , button [ onClick (Zoom In), buttonStyle ] [ text "+" ]
+                                , button [ onClick (Zoom Out), buttonStyle ] [ text "-" ]
                                 ]
                            , mkHtmlElement (h1 [] [ text "Results" ])
                            ]
@@ -364,6 +374,39 @@ view model =
         [ allElements
         ]
     }
+
+
+explanationText =
+    [ Element.html <|
+        K.generate elementGenerator <|
+            human "This page was created to demonstrate the "
+    ]
+        ++ [ Element.link [ Font.color (Element.rgb 0 0 1), Font.underline ]
+                { url =
+                    "https://en.wikipedia.org/wiki/Vector_model_of_the_atom"
+                , label =
+                    Element.text
+                        "vector model"
+                }
+           ]
+        ++ [ Element.html <|
+                K.generate elementGenerator <|
+                    human
+                        (" for quantum mechanical angular momenta.\n"
+                            ++ "You can rotate the model in three dimensional space "
+                            ++ "by holding the left mouse button and move the cursor."
+                            ++ "Unfortunately, rotating the model is not possible on "
+                            ++ "a mobile device, yet. Zoom in or out of the model by "
+                            ++ "using the scroll wheel or the zoom buttons below."
+                            ++ "Depending on your screen size, scrolling will interfere "
+                            ++ "with the zoom function. For this you can disable the "
+                            ++ "scrolling of your browser window with the above buttons."
+                        )
+           ]
+
+
+buttonStyle =
+    style "margin" "2px"
 
 
 stupidStrConvert : String -> Float -> Model -> String
@@ -383,6 +426,15 @@ stupidStrConvert str ml model =
 
 
 htmlGenerator isDisplayMode stringLatex =
+    case isDisplayMode of
+        Just True ->
+            div [ style "font-size" "1rem" ] [ text stringLatex ]
+
+        _ ->
+            span [ style "font-size" "1rem" ] [ text stringLatex ]
+
+
+elementGenerator isDisplayMode stringLatex =
     case isDisplayMode of
         Just True ->
             div [] [ text stringLatex ]
@@ -424,6 +476,8 @@ results model =
             ( headingJ, charJ, textJ )
     in
     showResult passL orbitalAnuglar
+        -- div text " " for some separation of the two results
+        ++ [ div [] [ text " " ] ]
         ++ showResult passJ totalAngular
 
 
@@ -447,8 +501,9 @@ showResult ( heading, char, content ) angularMomentum =
         mlList =
             genList angularMomentum
     in
-    [ h2 [] [ text heading ]
-    , [ -- human content
+    [ -- h2 [] [ text heading ]
+      --, [ -- human content
+      [ -- human content
         inline char
       , human " = "
       , human (String.fromFloat angularMomentum)
@@ -461,7 +516,7 @@ showResult ( heading, char, content ) angularMomentum =
         |> div []
     , [ inline (lengthText char)
       , human " = "
-      , human (String.fromFloat length)
+      , human (Printf.printf (Printf.f 6) length)
       , inline "\\hbar"
       ]
         |> List.map (K.generate htmlGenerator)
@@ -478,17 +533,7 @@ subscriptions model =
         -- switches to a different tab or something
         Sub.batch
             [ Browser.Events.onMouseMove decodeMouseMove
-            , onTouchMove
-                (\val ->
-                    case Decode.decodeValue decodeMouseMove val of
-                        Ok it ->
-                            it
-
-                        Err _ ->
-                            NoOp
-                )
             , Browser.Events.onMouseUp (Decode.succeed MouseUp)
-            , onTouchEnd (\_ -> MouseUp)
             ]
 
     else
@@ -496,9 +541,6 @@ subscriptions model =
         -- to start orbiting
         Sub.batch
             [ Browser.Events.onMouseDown (Decode.succeed MouseDown)
-            , onTouchStart (\_ -> MouseDown)
-
-            -- , on "scroll" decodeScroll
             , onWheel
                 (\val ->
                     case Decode.decodeValue wheelDecoder val of
@@ -508,11 +550,6 @@ subscriptions model =
                         Err _ ->
                             NoOp
                 )
-
-            --      , Wheel.onWheel
-            --          (\event ->
-            --              Scrolling event.deltaY
-            --          )
             ]
 
 
@@ -844,24 +881,12 @@ decodeMouseMove =
 
 wheelDecoder : Decoder Float
 wheelDecoder =
-    -- Decode.map Scrolling
     Decode.field "deltaY" Decode.float
-
-
-
---decodeScroll : Decoder Msg
---decodeScroll =
---    Decode.map ScrollIt
---        (Decode.field "deltaY" (Decode.map Pixels.float Decode.float))
 
 
 genLButtons ls =
     List.map genLButton ls
 
 
-
--- genLButton : Int -> Html msg
-
-
 genLButton l =
-    button [ onClick (ChangeL l) ] [ text (String.fromInt l) ]
+    button [ onClick (ChangeL l), buttonStyle ] [ text (String.fromInt l) ]

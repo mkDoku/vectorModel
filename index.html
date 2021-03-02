@@ -29,9 +29,6 @@
           flags: Date.now()
         });
 document.addEventListener("wheel", app.ports.onWheel.send);
-document.addEventListener("touchstart", app.ports.onTouchStart.send);
-document.addEventListener("touchend", app.ports.onTouchEnd.send);
-document.addEventListener("touchmove", app.ports.onTouchMove.send);
     </script>
 
     <script>
@@ -53,8 +50,8 @@ document.addEventListener("touchmove", app.ports.onTouchMove.send);
     <!-- also taken from
       https://stackoverflow.com/questions/4770025/how-to-disable-scrolling-temporarily -->
     <div id="menu">
-		  <button id="enable">enable site scrolling</button>
-		  <button id="disable">disable site scrolling</button>
+		  <button class="menuButton" id="enable">enable site scrolling</button>
+		  <button class="menuButton" id="disable">disable site scrolling</button>
 		  <strong id="status" class="enabled">enabled</strong>
 	  </div>
     <script src="DontScroll.js"></script>
