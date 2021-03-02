@@ -42,6 +42,15 @@ For the use see: <https://ellie-app.com/qqp6pVJRQa1/0>
 port onWheel : (Value -> msg) -> Sub msg
 
 
+port onTouchMove : (Value -> msg) -> Sub msg
+
+
+port onTouchStart : (Value -> msg) -> Sub msg
+
+
+port onTouchEnd : (Value -> msg) -> Sub msg
+
+
 
 -- Type Definitions
 
@@ -469,7 +478,17 @@ subscriptions model =
         -- switches to a different tab or something
         Sub.batch
             [ Browser.Events.onMouseMove decodeMouseMove
+            , onTouchMove
+                (\val ->
+                    case Decode.decodeValue decodeMouseMove val of
+                        Ok it ->
+                            it
+
+                        Err _ ->
+                            NoOp
+                )
             , Browser.Events.onMouseUp (Decode.succeed MouseUp)
+            , onTouchEnd (\_ -> MouseUp)
             ]
 
     else
@@ -477,6 +496,7 @@ subscriptions model =
         -- to start orbiting
         Sub.batch
             [ Browser.Events.onMouseDown (Decode.succeed MouseDown)
+            , onTouchStart (\_ -> MouseDown)
 
             -- , on "scroll" decodeScroll
             , onWheel

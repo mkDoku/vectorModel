@@ -29,6 +29,9 @@
           flags: Date.now()
         });
 document.addEventListener("wheel", app.ports.onWheel.send);
+document.addEventListener("touchstart", app.ports.onTouchStart.send);
+document.addEventListener("touchend", app.ports.onTouchEnd.send);
+document.addEventListener("touchmove", app.ports.onTouchMove.send);
     </script>
 
     <script>

@@ -7495,6 +7495,9 @@ var $elm$browser$Browser$Events$onMouseDown = A2($elm$browser$Browser$Events$on,
 var $elm$browser$Browser$Events$onMouseMove = A2($elm$browser$Browser$Events$on, $elm$browser$Browser$Events$Document, 'mousemove');
 var $elm$browser$Browser$Events$onMouseUp = A2($elm$browser$Browser$Events$on, $elm$browser$Browser$Events$Document, 'mouseup');
 var $elm$json$Json$Decode$value = _Json_decodeValue;
+var $author$project$Main$onTouchEnd = _Platform_incomingPort('onTouchEnd', $elm$json$Json$Decode$value);
+var $author$project$Main$onTouchMove = _Platform_incomingPort('onTouchMove', $elm$json$Json$Decode$value);
+var $author$project$Main$onTouchStart = _Platform_incomingPort('onTouchStart', $elm$json$Json$Decode$value);
 var $author$project$Main$onWheel = _Platform_incomingPort('onWheel', $elm$json$Json$Decode$value);
 var $author$project$Main$wheelDecoder = A2($elm$json$Json$Decode$field, 'deltaY', $elm$json$Json$Decode$float);
 var $author$project$Main$subscriptions = function (model) {
@@ -7502,18 +7505,36 @@ var $author$project$Main$subscriptions = function (model) {
 		_List_fromArray(
 			[
 				$elm$browser$Browser$Events$onMouseMove($author$project$Main$decodeMouseMove),
+				$author$project$Main$onTouchMove(
+				function (val) {
+					var _v0 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$decodeMouseMove, val);
+					if (_v0.$ === 'Ok') {
+						var it = _v0.a;
+						return it;
+					} else {
+						return $author$project$Main$NoOp;
+					}
+				}),
 				$elm$browser$Browser$Events$onMouseUp(
-				$elm$json$Json$Decode$succeed($author$project$Main$MouseUp))
+				$elm$json$Json$Decode$succeed($author$project$Main$MouseUp)),
+				$author$project$Main$onTouchEnd(
+				function (_v1) {
+					return $author$project$Main$MouseUp;
+				})
 			])) : $elm$core$Platform$Sub$batch(
 		_List_fromArray(
 			[
 				$elm$browser$Browser$Events$onMouseDown(
 				$elm$json$Json$Decode$succeed($author$project$Main$MouseDown)),
+				$author$project$Main$onTouchStart(
+				function (_v2) {
+					return $author$project$Main$MouseDown;
+				}),
 				$author$project$Main$onWheel(
 				function (val) {
-					var _v0 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$wheelDecoder, val);
-					if (_v0.$ === 'Ok') {
-						var it = _v0.a;
+					var _v3 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$wheelDecoder, val);
+					if (_v3.$ === 'Ok') {
+						var it = _v3.a;
 						return $author$project$Main$Scrolling(it);
 					} else {
 						return $author$project$Main$NoOp;
